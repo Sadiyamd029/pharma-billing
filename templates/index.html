@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+<h2>Billing</h2>
+
+<form method="POST">
+
+<input name="party" placeholder="Party Name"><br><br>
+
+<table id="billTable">
+<tr>
+<th>Medicine</th>
+<th>Batch</th>
+<th>Expiry</th>
+<th>Qty</th>
+<th>Rate</th>
+<th>GST</th>
+</tr>
+
+<tr>
+<td><input name="name"></td>
+<td><input name="batch"></td>
+<td><input type="date" name="expiry"></td>
+<td><input name="qty"></td>
+<td><input name="rate"></td>
+<td><input name="gst"></td>
+</tr>
+
+</table>
+
+<br>
+<button type="button" onclick="addRow()">+ Add Row</button>
+<button type="submit">Generate Bill</button>
+
+</form>
+</div>
+
+<div class="card">
+<h3>Invoice</h3>
+
+<table>
+<tr>
+<th>Name</th><th>Batch</th><th>Qty</th><th>Total</th>
+</tr>
+
+{% for i in items %}
+<tr>
+<td>{{ i.name }}</td>
+<td>{{ i.batch }}</td>
+<td>{{ i.qty }}</td>
+<td>{{ i.amount }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<h3>Total: ₹{{ total }}</h3>
+<br>
+
+<button onclick="printBill()">🖨 Print</button>
+
+<a href="/download_pdf?items={{ items | tojson | safe }}">
+    <button type="button">⬇ Download PDF</button>
+</a>
+</div>
+
+<script>
+    function printBill() {
+    window.print();
+}
+function addRow(){
+    let row = document.getElementById("billTable").insertRow();
+    row.innerHTML = `
+    <td><input name="name"></td>
+    <td><input name="batch"></td>
+    <td><input type="date" name="expiry"></td>
+    <td><input name="qty"></td>
+    <td><input name="rate"></td>
+    <td><input name="gst"></td>`;
+}
+</script>
+
+{% endblock %}
