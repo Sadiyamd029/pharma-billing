@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base.html" %}
 {% block content %}
 
@@ -34,4 +35,42 @@
 </table>
 </div>
 
+=======
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+<h2>Add Stock</h2>
+
+<form method="POST">
+<input name="name" placeholder="Medicine"><br><br>
+<input name="batch" placeholder="Batch"><br><br>
+<input type="date" name="expiry"><br><br>
+<input name="stock" placeholder="Stock"><br><br>
+
+<button>Add Stock</button>
+</form>
+</div>
+
+<div class="card">
+<h3>All Medicines</h3>
+
+<table>
+<tr>
+<th>Name</th><th>Batch</th><th>Expiry</th><th>Stock</th>
+</tr>
+
+{% for m in medicines %}
+<tr>
+<td>{{ m[0] }}</td>
+<td>{{ m[1] }}</td>
+<td>{{ m[2] }}</td>
+<td>{{ m[3] }}</td>
+</tr>
+{% endfor %}
+
+</table>
+</div>
+
+>>>>>>> fee1756c5dd3a2308ab8b4e56742311ac221c53f
 {% endblock %}

@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 flask
 bcrypt
 gunicorn
 reportlab
+=======
+flask
+reportlab
+gunicorn
+>>>>>>> fee1756c5dd3a2308ab8b4e56742311ac221c53f

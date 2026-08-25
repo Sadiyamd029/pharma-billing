@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base.html" %}
 {% block content %}
 
@@ -26,4 +27,34 @@
 
 </div>
 
+=======
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+<h2>Alerts</h2>
+
+<h3>Low Stock</h3>
+<table>
+{% for m in low_stock %}
+<tr>
+<td>{{ m[0] }}</td>
+<td>{{ m[3] }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h3>Expiry Soon</h3>
+<table>
+{% for m in expiry_soon %}
+<tr>
+<td>{{ m[0] }}</td>
+<td>{{ m[2] }}</td>
+</tr>
+{% endfor %}
+</table>
+
+</div>
+
+>>>>>>> fee1756c5dd3a2308ab8b4e56742311ac221c53f
 {% endblock %}
