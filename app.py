@@ -176,13 +176,22 @@ def download_pdf():
 
     c.save()
     buffer.seek(0)
-
     return send_file(buffer,
                      as_attachment=True,
                      download_name="invoice.pdf",
                      mimetype="application/pdf")
+    @app.route("/chart_data")
+    @login_required
+    def chart_data():
+     medicines = get_all_medicines()
 
+    labels = [m[0] for m in medicines]   # medicine names
+    stock = [m[3] for m in medicines]    # stock values
 
+    return {
+        "labels": labels,
+        "stock": stock
+    }
 # 🧠 INIT DB
 init_db()
 
