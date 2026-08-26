@@ -47,7 +47,7 @@ def logout():
 
 
 # 🧾 BILLING
-@app.route("/", methods=["GET", "POST"])
+@app.route("/billing", methods=["GET", "POST"])
 @login_required
 def index():
     total = 0
