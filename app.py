@@ -22,6 +22,10 @@ def login_required(func):
         return func(*args, **kwargs)
     return wrapper
 
+@app.route("/")
+def home():
+    return redirect("/login")
+
 
 # 🔐 LOGIN
 @app.route("/login", methods=["GET", "POST"])
