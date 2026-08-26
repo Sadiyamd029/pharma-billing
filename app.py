@@ -24,6 +24,8 @@ def login_required(func):
 
 @app.route("/")
 def home():
+    if "user" in session:
+        return redirect("/dashboard")
     return redirect("/login")
 
 
