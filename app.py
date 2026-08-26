@@ -47,10 +47,48 @@ def logout():
 
 
 # 🧾 BILLING
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    return "Working"
+    total = 0
+    items = []
+
+    if request.method == "POST":
+        names = request.form.getlist("name")
+        batchs = request.form.getlist("batch")
+        qtys = request.form.getlist("qty")
+        rates = request.form.getlist("rate")
+        gsts = request.form.getlist("gst")
+
+        for i in range(len(names)):
+            if not names[i]:
+                continue
+
+            try:
+                qty = float(qtys[i])
+                rate = float(rates[i])
+                gst = float(gsts[i])
+            except:
+                continue
+
+            amount = qty * rate
+            gst_amount = amount * gst / 100
+            total_item = amount + gst_amount
+
+            total += total_item
+
+            reduce_stock(names[i], batchs[i], int(qty))
+
+            items.append({
+                "name": names[i],
+                "batch": batchs[i],
+                "qty": qty,
+                "rate": rate,
+                "gst": gst,
+                "amount": round(total_item, 2)
+            })
+
+    return render_template("index.html", items=items, total=round(total, 2))
 
 
 # ➕ ADD STOCK
