@@ -117,6 +117,29 @@ def add_stock():
     medicines = get_all_medicines()
     return render_template("add_stock.html", medicines=medicines)
 
+@app.route("/edit/<name>/<batch>", methods=["GET", "POST"])
+@login_required
+def edit_medicine(name, batch):
+    medicines = get_all_medicines()
+
+    if request.method == "POST":
+        new_stock = request.form.get("stock")
+
+        from db import update_medicine
+        update_medicine(name, batch, int(new_stock))
+
+        return redirect("/add_stock")
+
+    return render_template("edit.html", name=name, batch=batch)
+
+@app.route("/delete/<name>/<batch>")
+@login_required
+def delete_medicine(name, batch):
+    from db import delete_medicine_db
+    delete_medicine_db(name, batch)
+
+    return redirect("/add_stock")
+
 
 # ⚠️ ALERTS
 @app.route("/alerts")
