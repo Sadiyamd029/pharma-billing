@@ -57,7 +57,7 @@ def check_user(username, password):
         stored_password, role = result
 
         if check_password_hash(stored_password, password):
-            return role   # return role instead of True
+            return role   # ✅ return role
 
     return None
 
@@ -102,15 +102,19 @@ def get_alerts():
 
     return low_stock, expiry_soon
 
+
+# ✏️ UPDATE MEDICINE
 def update_medicine(name, batch, stock):
     cur.execute(
         "UPDATE medicines SET stock=%s WHERE name=%s AND batch=%s",
         (stock, name, batch)
     )
     conn.commit()
-    
-    def delete_medicine_db(name, batch):
-        cur.execute(
+
+
+# ❌ DELETE MEDICINE (FIXED)
+def delete_medicine(name, batch):
+    cur.execute(
         "DELETE FROM medicines WHERE name=%s AND batch=%s",
         (name, batch)
     )
