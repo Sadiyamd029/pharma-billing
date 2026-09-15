@@ -101,3 +101,17 @@ def get_alerts():
     expiry_soon = cur.fetchall()
 
     return low_stock, expiry_soon
+
+def update_medicine(name, batch, stock):
+    cur.execute(
+        "UPDATE medicines SET stock=%s WHERE name=%s AND batch=%s",
+        (stock, name, batch)
+    )
+    conn.commit()
+    
+    def delete_medicine_db(name, batch):
+        cur.execute(
+        "DELETE FROM medicines WHERE name=%s AND batch=%s",
+        (name, batch)
+    )
+    conn.commit()
