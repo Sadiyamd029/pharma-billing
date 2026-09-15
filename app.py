@@ -168,6 +168,7 @@ def alerts():
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    import traceback
     try:
         medicines = get_all_medicines()
 
@@ -185,7 +186,7 @@ def dashboard():
         )
 
     except Exception as e:
-        return str(e)   # 👈 THIS WILL SHOW ERROR
+        return f"<pre>{traceback.format_exc()}</pre>"
 
 
 # 📊 CHART DATA
