@@ -29,7 +29,8 @@ body{
 
 /* 🌐 navbar */
 .navbar{
-    position:relative;
+    position:sticky;   /* ✅ ADDED */
+    top:0;             /* ✅ ADDED */
     z-index:2;
     display:flex;
     justify-content:space-between;
@@ -38,10 +39,16 @@ body{
     backdrop-filter: blur(10px);
 }
 
+/* ✅ Navbar hover effect */
 .navbar a{
     color:white;
     text-decoration:none;
     margin-right:15px;
+    transition:0.3s;
+}
+
+.navbar a:hover{
+    color:#00f2fe;
 }
 
 /* 💎 card */
@@ -51,6 +58,12 @@ body{
     border-radius:20px;
     padding:20px;
     margin:20px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    transition: 0.3s;
+}
+
+.card:hover{
+    transform: translateY(-5px);
 }
 
 /* 📊 layout */
@@ -60,11 +73,15 @@ body{
     padding:20px;
 }
 
-/* table */
+/* ✅ table improved */
 table{
     width:100%;
     border-collapse:collapse;
     margin-top:10px;
+}
+
+th{
+    background: rgba(255,255,255,0.1);
 }
 
 th, td{
@@ -72,7 +89,11 @@ th, td{
     border-bottom:1px solid rgba(255,255,255,0.2);
 }
 
-/* button */
+tr:hover{
+    background: rgba(255,255,255,0.05);
+}
+
+/* ✅ button upgrade */
 button{
     padding:10px 15px;
     border:none;
@@ -80,6 +101,12 @@ button{
     background: linear-gradient(45deg,#00f2fe,#4facfe);
     color:white;
     cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    transform: scale(1.05);
+    box-shadow: 0 0 10px #00f2fe;
 }
 
 /* input */
@@ -91,6 +118,7 @@ input{
     background: rgba(255,255,255,0.1);
     color:white;
 }
+
 </style>
 </head>
 
@@ -105,6 +133,7 @@ input{
         <a href="/add_stock">Stock</a>
         <a href="/alerts">Alerts</a>
         <a href="/dashboard">Dashboard</a>
+        <a href="/logout">Logout</a>
     </div>
 </div>
 
