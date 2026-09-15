@@ -1,13 +1,20 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, send_file
 from functools import wraps
-from db import init_db, reduce_stock, add_medicine, get_all_medicines, get_alerts
-from db import create_user, check_user
-from flask import send_file
+from db import (
+    init_db,
+    reduce_stock,
+    add_medicine,
+    get_all_medicines,
+    get_alerts,
+    create_user,
+    check_user,
+    update_medicine,
+    delete_medicine
+)
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
 import json
-
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
@@ -23,6 +30,7 @@ def login_required(func):
     return wrapper
 
 
+# 🏠 HOME
 @app.route("/")
 def home():
     if "user" in session:
@@ -117,27 +125,30 @@ def add_stock():
     medicines = get_all_medicines()
     return render_template("add_stock.html", medicines=medicines)
 
+
+# ✏️ EDIT MEDICINE
 @app.route("/edit/<name>/<batch>", methods=["GET", "POST"])
 @login_required
-def edit_medicine(name, batch):
-    medicines = get_all_medicines()
-
+def edit(name, batch):
     if request.method == "POST":
-        new_stock = request.form.get("stock")
-
-        from db import update_medicine
-        update_medicine(name, batch, int(new_stock))
-
+        stock = request.form.get("stock")
+        update_medicine(name, batch, stock)
         return redirect("/add_stock")
 
-    return render_template("edit.html", name=name, batch=batch)
+    return f"""
+    <h2>Edit {name} ({batch})</h2>
+    <form method="POST">
+        <input name="stock" placeholder="New Stock">
+        <button>Update</button>
+    </form>
+    """
 
+
+# ❌ DELETE MEDICINE
 @app.route("/delete/<name>/<batch>")
 @login_required
-def delete_medicine(name, batch):
-    from db import delete_medicine_db
-    delete_medicine_db(name, batch)
-
+def delete(name, batch):
+    delete_medicine(name, batch)
     return redirect("/add_stock")
 
 
