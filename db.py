@@ -1,10 +1,10 @@
 
-import sqlite3
-import bcrypt
+import psycopg2
+import os
+from werkzeug.security import generate_password_hash, check_password_hash
 
-def init_db():
-    conn = sqlite3.connect("pharma.db")
-    cur = conn.cursor()
+conn = psycopg2.connect(os.environ.get("DATABASE_URL"))
+cur = conn.cursor()
 
     # Medicines table
     cur.execute("""
@@ -32,10 +32,9 @@ def init_db():
 
 # 🔐 CREATE USER (HASHED PASSWORD)
 def create_user(username, password):
-    conn = sqlite3.connect("pharma.db")
-    cur = conn.cursor()
-
-    hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    hashed = generate_password_hash(password)
+    cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed))
+    conn.commit()
 
     try:
         cur.execute(
@@ -51,17 +50,11 @@ def create_user(username, password):
 
 # 🔐 CHECK USER LOGIN
 def check_user(username, password):
-    conn = sqlite3.connect("pharma.db")
-    cur = conn.cursor()
+    cur.execute("SELECT password FROM users WHERE username=%s", (username,))
+    result = cur.fetchone()
 
-    cur.execute("SELECT password FROM users WHERE username=?", (username,))
-    user = cur.fetchone()
-
-    conn.close()
-
-    if user:
-     return bcrypt.checkpw(password.encode(), user[0] if isinstance(user[0], bytes) else user[0].encode())
-
+    if result:
+        return check_password_hash(result[0], password)
     return False
 
 
