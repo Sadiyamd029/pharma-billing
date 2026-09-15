@@ -22,6 +22,7 @@ def login_required(func):
         return func(*args, **kwargs)
     return wrapper
 
+
 @app.route("/")
 def home():
     if "user" in session:
@@ -36,8 +37,11 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        if check_user(username, password):
+        role = check_user(username, password)
+
+        if role:
             session["user"] = username
+            session["role"] = role
             return redirect("/dashboard")
         else:
             return "Invalid Login"
@@ -49,6 +53,7 @@ def login():
 @app.route("/logout")
 def logout():
     session.pop("user", None)
+    session.pop("role", None)
     return redirect("/login")
 
 
@@ -118,9 +123,11 @@ def add_stock():
 @login_required
 def alerts():
     low_stock, expiry_soon = get_alerts()
-    return render_template("alerts.html",
-                           low_stock=low_stock,
-                           expiry_soon=expiry_soon)
+    return render_template(
+        "alerts.html",
+        low_stock=low_stock,
+        expiry_soon=expiry_soon
+    )
 
 
 # 📊 DASHBOARD
@@ -141,6 +148,21 @@ def dashboard():
         low_stock=len(low_stock),
         expiry_soon=len(expiry_soon)
     )
+
+
+# 📊 CHART DATA
+@app.route("/chart_data")
+@login_required
+def chart_data():
+    medicines = get_all_medicines()
+
+    labels = [m[0] for m in medicines]
+    stock = [m[3] for m in medicines]
+
+    return {
+        "labels": labels,
+        "stock": stock
+    }
 
 
 # 🧾 DOWNLOAD PDF
@@ -182,27 +204,20 @@ def download_pdf():
 
     c.save()
     buffer.seek(0)
-    return send_file(buffer,
-                     as_attachment=True,
-                     download_name="invoice.pdf",
-                     mimetype="application/pdf")
-    @app.route("/chart_data")
-    @login_required
-    def chart_data():
-     medicines = get_all_medicines()
 
-    labels = [m[0] for m in medicines]   # medicine names
-    stock = [m[3] for m in medicines]    # stock values
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="invoice.pdf",
+        mimetype="application/pdf"
+    )
 
-    return {
-        "labels": labels,
-        "stock": stock
-    }
+
 # 🧠 INIT DB
 init_db()
 
 # 👤 DEFAULT USER
-create_user("admin", "admin123")
+create_user("admin", "admin123", "admin")
 
 
 # 🚀 RUN
