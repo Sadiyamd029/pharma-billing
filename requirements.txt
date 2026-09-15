@@ -2,3 +2,4 @@ flask
 gunicorn
 bcrypt
 reportlab
+psycopg2-binary
