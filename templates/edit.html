@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+<h2>Edit Medicine</h2>
+
+<form method="POST">
+    <p>Name: {{ name }}</p>
+    <p>Batch: {{ batch }}</p>
+
+    <input name="stock" placeholder="New Stock" required><br><br>
+
+    <button>Update</button>
+</form>
+</div>
+
+{% endblock %}
