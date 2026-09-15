@@ -168,20 +168,24 @@ def alerts():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    medicines = get_all_medicines()
+    try:
+        medicines = get_all_medicines()
 
-    total_medicines = len(medicines)
-    total_stock = sum([m[3] for m in medicines]) if medicines else 0
+        total_medicines = len(medicines) if medicines else 0
+        total_stock = sum([m[3] for m in medicines]) if medicines else 0
 
-    low_stock, expiry_soon = get_alerts()
+        low_stock, expiry_soon = get_alerts()
 
-    return render_template(
-        "dashboard.html",
-        total_medicines=total_medicines,
-        total_stock=total_stock,
-        low_stock=len(low_stock),
-        expiry_soon=len(expiry_soon)
-    )
+        return render_template(
+            "dashboard.html",
+            total_medicines=total_medicines,
+            total_stock=total_stock,
+            low_stock=len(low_stock),
+            expiry_soon=len(expiry_soon)
+        )
+
+    except Exception as e:
+        return str(e)   # 👈 THIS WILL SHOW ERROR
 
 
 # 📊 CHART DATA
