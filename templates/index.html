@@ -26,7 +26,6 @@
 <td><input name="rate"></td>
 <td><input name="gst"></td>
 </tr>
-
 </table>
 
 <br>
@@ -36,7 +35,8 @@
 </form>
 </div>
 
-<div class="card">
+<!-- ✅ INVOICE SECTION -->
+<div class="card" id="invoice">
 <h3>Invoice</h3>
 
 <table>
@@ -66,10 +66,18 @@
 </div>
 
 <script>
+/* ✅ PRINT ONLY INVOICE */
 function printBill() {
+    let content = document.getElementById("invoice").innerHTML;
+    let original = document.body.innerHTML;
+
+    document.body.innerHTML = content;
     window.print();
+    document.body.innerHTML = original;
+    location.reload();
 }
 
+/* ✅ ADD ROW */
 function addRow(){
     let row = document.getElementById("billTable").insertRow();
     row.innerHTML = `
