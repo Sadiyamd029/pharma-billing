@@ -8,8 +8,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 cur = conn.cursor()
 
-cur.execute("DELETE FROM users WHERE username='admin'")
-conn.commit()
+
 
 
 # 🧠 INIT DB
