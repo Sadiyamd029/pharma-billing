@@ -4,7 +4,8 @@
 <div class="card">
 <h2>Billing</h2>
 
-<form method="POST">
+<!-- ✅ FIXED FORM -->
+<form method="POST" action="/">
 
 <input name="party" placeholder="Party Name"><br><br>
 
@@ -35,13 +36,19 @@
 </form>
 </div>
 
+
 <!-- ✅ INVOICE SECTION -->
 <div class="card" id="invoice">
-<h3>Invoice</h3>
+<h3 style="text-align:center;">💊 Pharma Invoice</h3>
 
-<table>
+<p><b>Party:</b> {{ request.form.party }}</p>
+
+<table border="1" style="width:100%; border-collapse:collapse;">
 <tr>
-<th>Name</th><th>Batch</th><th>Qty</th><th>Total</th>
+<th>Name</th>
+<th>Batch</th>
+<th>Qty</th>
+<th>Total</th>
 </tr>
 
 {% for i in items %}
@@ -63,10 +70,13 @@
 <a href="/download_pdf?items={{ items | tojson | safe }}">
     <button type="button">⬇ Download PDF</button>
 </a>
+
 </div>
 
+
 <script>
-/* ✅ PRINT ONLY INVOICE */
+
+/* ✅ PRINT ONLY INVOICE (FIXED) */
 function printBill() {
     let content = document.getElementById("invoice").innerHTML;
     let original = document.body.innerHTML;
@@ -87,10 +97,8 @@ function addRow(){
     <td><input name="qty"></td>
     <td><input name="rate"></td>
     <td><input name="gst"></td>`;
-    function printBill() {
-    window.print();
 }
-}
+
 </script>
 
 {% endblock %}
