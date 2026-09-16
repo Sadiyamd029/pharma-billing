@@ -118,36 +118,40 @@ input{
     background: rgba(255,255,255,0.1);
     color:white;
 
-    /* 🖨 PRINT FIX */
-@media print {
+    @media print {
 
     body {
         background: white !important;
         color: black !important;
+        margin: 0;
+        padding: 0;
     }
 
-    #particles-js,
-    .navbar,
-    button,
-    a {
+    .navbar, button {
         display: none !important;
     }
 
-    .card {
-        background: white !important;
-        box-shadow: none !important;
-        border: 1px solid #ccc;
+    #invoice {
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        box-shadow: none;
+        background: white;
     }
 
-    table, th, td {
-        border: 1px solid black;
-        color: black;
+    table {
+        width: 100%;
+        font-size: 16px;
     }
 
-    input {
-        border: none;
-        background: none;
-        color: black;
+    h3 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    @page {
+        size: A4;
+        margin: 10mm;
     }
 }
 }
