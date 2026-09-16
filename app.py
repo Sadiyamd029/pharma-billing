@@ -256,7 +256,7 @@ def download_pdf():
 init_db()
 
 # 👤 DEFAULT USER
-create_user("admin", "admin123", "admin")
+create_user("admin", "irfan1016", "admin")
 
 
 # 🚀 RUN
