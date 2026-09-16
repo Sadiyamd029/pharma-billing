@@ -117,6 +117,39 @@ input{
     border:none;
     background: rgba(255,255,255,0.1);
     color:white;
+
+    /* 🖨 PRINT FIX */
+@media print {
+
+    body {
+        background: white !important;
+        color: black !important;
+    }
+
+    #particles-js,
+    .navbar,
+    button,
+    a {
+        display: none !important;
+    }
+
+    .card {
+        background: white !important;
+        box-shadow: none !important;
+        border: 1px solid #ccc;
+    }
+
+    table, th, td {
+        border: 1px solid black;
+        color: black;
+    }
+
+    input {
+        border: none;
+        background: none;
+        color: black;
+    }
+}
 }
 
 </style>
