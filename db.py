@@ -2,8 +2,10 @@ import psycopg2
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# 🔗 CONNECT TO POSTGRES
-conn = psycopg2.connect(os.environ.get("DATABASE_URL"))
+# 🔗 CONNECT TO POSTGRES (FIXED FOR RENDER)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 cur = conn.cursor()
 
 
@@ -21,7 +23,7 @@ def init_db():
     )
     """)
 
-    # Users table with role
+    # Users table
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -34,7 +36,7 @@ def init_db():
     conn.commit()
 
 
-# 🔐 CREATE USER
+# 🔐 CREATE USER (SAFE)
 def create_user(username, password, role="admin"):
     hashed = generate_password_hash(password)
 
@@ -44,11 +46,12 @@ def create_user(username, password, role="admin"):
             (username, hashed, role)
         )
         conn.commit()
-    except:
-        pass
+    except Exception as e:
+        # Ignore duplicate user error
+        conn.rollback()
 
 
-# 🔐 CHECK LOGIN
+# 🔐 CHECK LOGIN (SAFE)
 def check_user(username, password):
     cur.execute("SELECT password, role FROM users WHERE username=%s", (username,))
     result = cur.fetchone()
@@ -57,27 +60,33 @@ def check_user(username, password):
         stored_password, role = result
 
         if check_password_hash(stored_password, password):
-            return role   # ✅ return role
+            return role
 
     return None
 
 
 # 📦 ADD MEDICINE
 def add_medicine(name, batch, expiry, stock):
-    cur.execute(
-        "INSERT INTO medicines (name, batch, expiry, stock) VALUES (%s, %s, %s, %s)",
-        (name, batch, expiry, stock)
-    )
-    conn.commit()
+    try:
+        cur.execute(
+            "INSERT INTO medicines (name, batch, expiry, stock) VALUES (%s, %s, %s, %s)",
+            (name, batch, expiry, stock)
+        )
+        conn.commit()
+    except:
+        conn.rollback()
 
 
 # 📉 REDUCE STOCK
 def reduce_stock(name, batch, qty):
-    cur.execute(
-        "UPDATE medicines SET stock = stock - %s WHERE name=%s AND batch=%s",
-        (qty, name, batch)
-    )
-    conn.commit()
+    try:
+        cur.execute(
+            "UPDATE medicines SET stock = stock - %s WHERE name=%s AND batch=%s",
+            (qty, name, batch)
+        )
+        conn.commit()
+    except:
+        conn.rollback()
 
 
 # 📋 GET ALL MEDICINES
@@ -93,7 +102,7 @@ def get_alerts():
     cur.execute("SELECT * FROM medicines WHERE stock < 10")
     low_stock = cur.fetchall()
 
-    # Expiry soon (30 days)
+    # Expiry soon
     cur.execute("""
         SELECT * FROM medicines
         WHERE expiry <= CURRENT_DATE + INTERVAL '30 days'
@@ -105,17 +114,23 @@ def get_alerts():
 
 # ✏️ UPDATE MEDICINE
 def update_medicine(name, batch, stock):
-    cur.execute(
-        "UPDATE medicines SET stock=%s WHERE name=%s AND batch=%s",
-        (stock, name, batch)
-    )
-    conn.commit()
+    try:
+        cur.execute(
+            "UPDATE medicines SET stock=%s WHERE name=%s AND batch=%s",
+            (stock, name, batch)
+        )
+        conn.commit()
+    except:
+        conn.rollback()
 
 
-# ❌ DELETE MEDICINE (FIXED)
+# ❌ DELETE MEDICINE
 def delete_medicine(name, batch):
-    cur.execute(
-        "DELETE FROM medicines WHERE name=%s AND batch=%s",
-        (name, batch)
-    )
-    conn.commit()
+    try:
+        cur.execute(
+            "DELETE FROM medicines WHERE name=%s AND batch=%s",
+            (name, batch)
+        )
+        conn.commit()
+    except:
+        conn.rollback()
