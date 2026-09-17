@@ -37,42 +37,61 @@
 </div>
 
 
-<!-- ✅ INVOICE SECTION -->
-<div class="card" id="invoice">
-<h3 style="text-align:center;">💊 Pharma Invoice</h3>
+<!-- ✅ NEW PROFESSIONAL INVOICE -->
+<div id="invoice" class="invoice-container">
 
-<p><b>Party:</b> {{ request.form.party }}</p>
+  <div class="header">
+    <h2>🏥 Aarogya Medicals</h2>
+    <p>Bhimavaram | Ph: 9876543210</p>
+    <p>GSTIN: 22AAAAA0000A1Z5</p>
+  </div>
 
-<table border="1" style="width:100%; border-collapse:collapse;">
-<tr>
-<th>Name</th>
-<th>Batch</th>
-<th>Qty</th>
-<th>Total</th>
-</tr>
+  <hr>
 
-{% for i in items %}
-<tr>
-<td>{{ i.name }}</td>
-<td>{{ i.batch }}</td>
-<td>{{ i.qty }}</td>
-<td>{{ i.amount }}</td>
-</tr>
-{% endfor %}
+  <div class="invoice-info">
+    <p><b>Invoice No:</b> 001</p>
+    <p><b>Date:</b> {{ date }}</p>
+    <p><b>Party:</b> {{ request.form.party }}</p>
+  </div>
 
-</table>
+  <table>
+    <tr>
+      <th>Medicine</th>
+      <th>Batch</th>
+      <th>Expiry</th>
+      <th>Qty</th>
+      <th>Rate</th>
+      <th>GST</th>
+      <th>Amount</th>
+    </tr>
 
-<h3>Total: ₹{{ total }}</h3>
-<br>
+    {% for i in items %}
+    <tr>
+      <td>{{ i.name }}</td>
+      <td>{{ i.batch }}</td>
+      <td>{{ i.expiry }}</td>
+      <td>{{ i.qty }}</td>
+      <td>{{ i.rate }}</td>
+      <td>{{ i.gst }}%</td>
+      <td>{{ i.amount }}</td>
+    </tr>
+    {% endfor %}
+  </table>
 
-<button onclick="printBill()">🖨 Print</button>
+  <div class="totals">
+    <p>Subtotal: ₹{{ total }}</p>
+    <h3>Total: ₹{{ total }}</h3>
+  </div>
 
-<a href="/download_pdf?items={{ items | tojson | safe }}">
-    <button type="button">⬇ Download PDF</button>
-</a>
+  <div class="footer">
+    <p>Thank you! Visit again</p>
+    <p>Authorized Signature</p>
+  </div>
 
 </div>
 
+<!-- ✅ PRINT BUTTON -->
+<button onclick="printBill()" class="no-print">🖨 Print</button>
 
 <script>
 
