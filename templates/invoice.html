@@ -1,157 +1,89 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Invoice</title>
+    <title>Invoice</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
+    <style>
+        body {
+            font-family: Arial;
+            background: #f5f5f5;
+            padding: 20px;
+        }
 
-    .invoice-box {
-      width: 100%;
-      border: 1px solid #ccc;
-      padding: 20px;
-    }
+        #invoice {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
 
-    .header h2 {
-      margin: 0;
-      color: #2e7d32;
-    }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
 
-    .details {
-      margin-top: 10px;
-      font-size: 14px;
-    }
+        h2 {
+            margin-bottom: 10px;
+        }
 
-    .section {
-      margin-top: 20px;
-    }
+        button {
+            margin-top: 15px;
+            padding: 10px 15px;
+        }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
+        /* PRINT FIX */
+        @media print {
+            body {
+                background: white;
+            }
 
-    table, th, td {
-      border: 1px solid #ccc;
-    }
-
-    th {
-      background: #f5f5f5;
-    }
-
-    th, td {
-      padding: 8px;
-      text-align: center;
-    }
-
-    .total {
-      text-align: right;
-      margin-top: 15px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .footer {
-      margin-top: 30px;
-      font-size: 12px;
-    }
-
-    .no-print {
-      margin-top: 20px;
-    }
-
-    /* PRINT FIX */
-    @media print {
-      .no-print {
-        display: none;
-      }
-
-      body {
-        margin: 0;
-      }
-    }
-  </style>
+            button {
+                display: none;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="invoice-box">
+<div id="invoice">
 
-  <!-- HEADER -->
-  <div class="header">
-    <div>
-      <h2>Your Medical Store</h2>
-      <div class="details">
-        Address: Your City <br>
-        Phone: 9999999999 <br>
-        GSTIN: XXXXXXXX
-      </div>
-    </div>
+    <h2>Invoice</h2>
 
-    <div>
-      <strong>Invoice No:</strong> {{ invoice_id }} <br>
-      <strong>Date:</strong> {{ date }}
-    </div>
-  </div>
+    <p><strong>Party Name:</strong> {{ party_name }}</p>
 
-  <!-- PARTY -->
-  <div class="section">
-    <strong>Party Name:</strong> {{ party_name }}
-  </div>
-
-  <!-- TABLE -->
-  <div class="section">
     <table>
-      <tr>
-        <th>Medicine</th>
-        <th>Batch</th>
-        <th>Expiry</th>
-        <th>Qty</th>
-        <th>Rate</th>
-        <th>GST %</th>
-        <th>Total</th>
-      </tr>
+        <tr>
+            <th>Medicine</th>
+            <th>Batch</th>
+            <th>Expiry</th>
+            <th>Qty</th>
+            <th>Rate</th>
+            <th>Total</th>
+        </tr>
 
-      {% for item in items %}
-      <tr>
-        <td>{{ item.name }}</td>
-        <td>{{ item.batch }}</td>
-        <td>{{ item.expiry }}</td>
-        <td>{{ item.qty }}</td>
-        <td>{{ item.rate }}</td>
-        <td>{{ item.gst }}</td>
-        <td>{{ item.total }}</td>
-      </tr>
-      {% endfor %}
+        {% for item in items %}
+        <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.batch }}</td>
+            <td>{{ item.expiry }}</td>
+            <td>{{ item.qty }}</td>
+            <td>{{ item.rate }}</td>
+            <td>{{ item.total }}</td>
+        </tr>
+        {% endfor %}
     </table>
-  </div>
 
-  <!-- TOTAL -->
-  <div class="total">
-    Grand Total: ₹ {{ total }}
-  </div>
+    <h3>Total: ₹{{ total }}</h3>
 
-  <!-- FOOTER -->
-  <div class="footer">
-    <p><strong>Terms:</strong> Goods once sold cannot be returned.</p>
-    <p style="text-align:right;">Authorized Signature</p>
-  </div>
+    <button onclick="window.print()">Print</button>
 
-</div>
-
-<!-- BUTTON -->
-<div class="no-print">
-  <button onclick="window.print()">Print</button>
 </div>
 
 </body>
