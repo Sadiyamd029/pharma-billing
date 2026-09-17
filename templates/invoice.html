@@ -2,89 +2,35 @@
 <html>
 <head>
     <title>Invoice</title>
-
-    <style>
-        body {
-            font-family: Arial;
-            background: #f5f5f5;
-            padding: 20px;
-        }
-
-        #invoice {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: center;
-        }
-
-        h2 {
-            margin-bottom: 10px;
-        }
-
-        button {
-            margin-top: 15px;
-            padding: 10px 15px;
-        }
-
-        /* PRINT FIX */
-        @media print {
-            body {
-                background: white;
-            }
-
-            button {
-                display: none;
-            }
-        }
-    </style>
 </head>
-
 <body>
 
-<div id="invoice">
+<h2>Invoice</h2>
 
-    <h2>Invoice</h2>
+<table border="1" cellpadding="8">
+    <tr>
+        <th>Name</th>
+        <th>Batch</th>
+        <th>Qty</th>
+        <th>Rate</th>
+        <th>Total</th>
+    </tr>
 
-    <p><strong>Party Name:</strong> {{ party_name }}</p>
+    {% for item in items %}
+    <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.batch }}</td>
+        <td>{{ item.qty }}</td>
+        <td>{{ item.rate }}</td>
+        <td>{{ item.amount }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
-    <table>
-        <tr>
-            <th>Medicine</th>
-            <th>Batch</th>
-            <th>Expiry</th>
-            <th>Qty</th>
-            <th>Rate</th>
-            <th>Total</th>
-        </tr>
+<h3>Total: {{ total }}</h3>
 
-        {% for item in items %}
-        <tr>
-            <td>{{ item.name }}</td>
-            <td>{{ item.batch }}</td>
-            <td>{{ item.expiry }}</td>
-            <td>{{ item.qty }}</td>
-            <td>{{ item.rate }}</td>
-            <td>{{ item.total }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-
-    <h3>Total: ₹{{ total }}</h3>
-
-    <button onclick="window.print()">Print</button>
-
-</div>
+<br>
+<button onclick="window.print()">Print</button>
 
 </body>
 </html>
