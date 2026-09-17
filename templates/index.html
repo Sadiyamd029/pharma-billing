@@ -1,82 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Billing</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: #f5f5f5;
-            padding: 20px;
-        }
-
-        table {
-            width: 100%;
-            background: white;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 10px;
-            border: 1px solid #ccc;
-        }
-
-        input {
-            width: 100%;
-            padding: 5px;
-        }
-
-        button {
-            padding: 10px 15px;
-            margin-top: 10px;
-            cursor: pointer;
-        }
-    </style>
+    <title>Pharma Billing</title>
 </head>
-
 <body>
 
-<h2>Billing</h2>
+<h2>Pharma Billing</h2>
 
-<form action="/billing" method="POST">
+<form method="POST" action="/billing">
 
-    <label>Party Name:</label>
-    <input type="text" name="party_name"><br><br>
+    <div id="rows">
+        <div>
+            Name: <input type="text" name="name">
+            Batch: <input type="text" name="batch">
+            Qty: <input type="number" name="qty">
+            Rate: <input type="number" name="rate">
+        </div>
+    </div>
 
-    <table id="table">
-        <tr>
-            <th>Medicine</th>
-            <th>Batch</th>
-            <th>Expiry</th>
-            <th>Qty</th>
-            <th>Rate</th>
-        </tr>
-
-        <tr>
-            <td><input name="name[]"></td>
-            <td><input name="batch[]"></td>
-            <td><input name="expiry[]"></td>
-            <td><input name="qty[]"></td>
-            <td><input name="rate[]"></td>
-        </tr>
-    </table>
-
-    <button type="button" onclick="addRow()">+ Add Row</button>
+    <br>
+    <button type="button" onclick="addRow()">Add Row</button>
     <button type="submit">Generate Bill</button>
 
 </form>
 
 <script>
 function addRow() {
-    let table = document.getElementById("table");
-    let row = table.insertRow();
-
-    row.innerHTML = `
-        <td><input name="name[]"></td>
-        <td><input name="batch[]"></td>
-        <td><input name="expiry[]"></td>
-        <td><input name="qty[]"></td>
-        <td><input name="rate[]"></td>
+    let div = document.createElement("div");
+    div.innerHTML = `
+        Name: <input type="text" name="name">
+        Batch: <input type="text" name="batch">
+        Qty: <input type="number" name="qty">
+        Rate: <input type="number" name="rate">
     `;
+    document.getElementById("rows").appendChild(div);
 }
 </script>
 
