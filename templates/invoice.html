@@ -1,99 +1,158 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Invoice</title>
+  <title>Invoice</title>
 
-<style>
-body {
-    font-family: Arial;
-    margin: 20px;
-}
-
-#invoice {
-    width: 800px;
-    margin: auto;
-}
-
-/* PRINT SETTINGS */
-@media print {
-    body * {
-        visibility: hidden;
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
     }
 
-    #invoice, #invoice * {
-        visibility: visible;
+    .invoice-box {
+      width: 100%;
+      border: 1px solid #ccc;
+      padding: 20px;
     }
 
-    #invoice {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-}
-</style>
 
+    .header h2 {
+      margin: 0;
+      color: #2e7d32;
+    }
+
+    .details {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .section {
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+
+    th {
+      background: #f5f5f5;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+
+    .total {
+      text-align: right;
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+    }
+
+    .no-print {
+      margin-top: 20px;
+    }
+
+    /* PRINT FIX */
+    @media print {
+      .no-print {
+        display: none;
+      }
+
+      body {
+        margin: 0;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<div id="invoice"> 
+<div class="invoice-box">
 
-<h2 style="text-align:center;">💊 Your Pharma Store</h2> 
-<p style="text-align:center;"> 
-Bhimavaram, Andhra Pradesh<br> 
-Phone: 9876543210<br> 
-GSTIN: 22ABCDE1234F1Z5 
-</p> 
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <h2>Your Medical Store</h2>
+      <div class="details">
+        Address: Your City <br>
+        Phone: 9999999999 <br>
+        GSTIN: XXXXXXXX
+      </div>
+    </div>
 
-<hr> 
+    <div>
+      <strong>Invoice No:</strong> {{ invoice_id }} <br>
+      <strong>Date:</strong> {{ date }}
+    </div>
+  </div>
 
-<p> 
-<b>Invoice No:</b> 001 <br> 
-<b>Date:</b> {{ now }} <br> 
-<b>Party:</b> {{ party }} 
-</p> 
+  <!-- PARTY -->
+  <div class="section">
+    <strong>Party Name:</strong> {{ party_name }}
+  </div>
 
-<table border="1" style="width:100%; border-collapse:collapse;"> 
-<tr> 
-<th>Name</th> 
-<th>Batch</th> 
-<th>Expiry</th> 
-<th>Qty</th> 
-<th>Rate</th> 
-<th>GST%</th> 
-<th>Total</th> 
-</tr> 
+  <!-- TABLE -->
+  <div class="section">
+    <table>
+      <tr>
+        <th>Medicine</th>
+        <th>Batch</th>
+        <th>Expiry</th>
+        <th>Qty</th>
+        <th>Rate</th>
+        <th>GST %</th>
+        <th>Total</th>
+      </tr>
 
-{% for i in items %} 
-<tr> 
-<td>{{ i.name }}</td> 
-<td>{{ i.batch }}</td> 
-<td>{{ i.expiry }}</td> 
-<td>{{ i.qty }}</td> 
-<td>{{ i.rate }}</td> 
-<td>{{ i.gst }}</td> 
-<td>{{ i.amount }}</td> 
-</tr> 
-{% endfor %} 
-</table> 
+      {% for item in items %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.batch }}</td>
+        <td>{{ item.expiry }}</td>
+        <td>{{ item.qty }}</td>
+        <td>{{ item.rate }}</td>
+        <td>{{ item.gst }}</td>
+        <td>{{ item.total }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
 
-<h3 style="text-align:right;">Grand Total: ₹{{ total }}</h3> 
+  <!-- TOTAL -->
+  <div class="total">
+    Grand Total: ₹ {{ total }}
+  </div>
 
-<br><br> 
-
-<p> 
-Customer Signature ____________   
-<span style="float:right;">Authorized Signature ____________</span> 
-</p> 
+  <!-- FOOTER -->
+  <div class="footer">
+    <p><strong>Terms:</strong> Goods once sold cannot be returned.</p>
+    <p style="text-align:right;">Authorized Signature</p>
+  </div>
 
 </div>
 
-<script>
-window.onload = function() {
-    window.print();
-}
-</script>
+<!-- BUTTON -->
+<div class="no-print">
+  <button onclick="window.print()">Print</button>
+</div>
 
 </body>
 </html>
