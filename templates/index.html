@@ -1,123 +1,84 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Billing</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f5f5f5;
+            padding: 20px;
+        }
 
-<div class="card">
+        table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        input {
+            width: 100%;
+            padding: 5px;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
 <h2>Billing</h2>
 
-<!-- ✅ FIXED FORM -->
-<form method="POST" action="/">
+<form action="/billing" method="POST">
 
-<input name="party" placeholder="Party Name"><br><br>
+    <label>Party Name:</label>
+    <input type="text" name="party_name"><br><br>
 
-<table id="billTable">
-<tr>
-<th>Medicine</th>
-<th>Batch</th>
-<th>Expiry</th>
-<th>Qty</th>
-<th>Rate</th>
-<th>GST</th>
-</tr>
+    <table id="table">
+        <tr>
+            <th>Medicine</th>
+            <th>Batch</th>
+            <th>Expiry</th>
+            <th>Qty</th>
+            <th>Rate</th>
+        </tr>
 
-<tr>
-<td><input name="name"></td>
-<td><input name="batch"></td>
-<td><input type="date" name="expiry"></td>
-<td><input name="qty"></td>
-<td><input name="rate"></td>
-<td><input name="gst"></td>
-</tr>
-</table>
+        <tr>
+            <td><input name="name[]"></td>
+            <td><input name="batch[]"></td>
+            <td><input name="expiry[]"></td>
+            <td><input name="qty[]"></td>
+            <td><input name="rate[]"></td>
+        </tr>
+    </table>
 
-<br>
-<button type="button" onclick="addRow()">+ Add Row</button>
-<button type="submit">Generate Bill</button>
+    <button type="button" onclick="addRow()">+ Add Row</button>
+    <button type="submit">Generate Bill</button>
 
 </form>
-</div>
-
-
-<!-- ✅ NEW PROFESSIONAL INVOICE -->
-<div id="invoice" class="invoice-container">
-
-  <div class="header">
-    <h2>🏥 Aarogya Medicals</h2>
-    <p>Bhimavaram | Ph: 9876543210</p>
-    <p>GSTIN: 22AAAAA0000A1Z5</p>
-  </div>
-
-  <hr>
-
-  <div class="invoice-info">
-    <p><b>Invoice No:</b> 001</p>
-    <p><b>Date:</b> {{ date }}</p>
-    <p><b>Party:</b> {{ request.form.party }}</p>
-  </div>
-
-  <table>
-    <tr>
-      <th>Medicine</th>
-      <th>Batch</th>
-      <th>Expiry</th>
-      <th>Qty</th>
-      <th>Rate</th>
-      <th>GST</th>
-      <th>Amount</th>
-    </tr>
-
-    {% for i in items %}
-    <tr>
-      <td>{{ i.name }}</td>
-      <td>{{ i.batch }}</td>
-      <td>{{ i.expiry }}</td>
-      <td>{{ i.qty }}</td>
-      <td>{{ i.rate }}</td>
-      <td>{{ i.gst }}%</td>
-      <td>{{ i.amount }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-
-  <div class="totals">
-    <p>Subtotal: ₹{{ total }}</p>
-    <h3>Total: ₹{{ total }}</h3>
-  </div>
-
-  <div class="footer">
-    <p>Thank you! Visit again</p>
-    <p>Authorized Signature</p>
-  </div>
-
-</div>
-
-<!-- ✅ PRINT BUTTON -->
-<button onclick="printBill()" class="no-print">🖨 Print</button>
 
 <script>
+function addRow() {
+    let table = document.getElementById("table");
+    let row = table.insertRow();
 
-/* ✅ PRINT ONLY INVOICE (FIXED) */
-function printBill() {
-    let content = document.getElementById("invoice").innerHTML;
-    let original = document.body.innerHTML;
-
-    document.body.innerHTML = content;
-    window.print();
-    document.body.innerHTML = original;
-    location.reload();
-}
-
-/* ✅ ADD ROW */
-function addRow(){
-    let row = document.getElementById("billTable").insertRow();
     row.innerHTML = `
-    <td><input name="name"></td>
-    <td><input name="batch"></td>
-    <td><input type="date" name="expiry"></td>
-    <td><input name="qty"></td>
-    <td><input name="rate"></td>
-    <td><input name="gst"></td>`;
+        <td><input name="name[]"></td>
+        <td><input name="batch[]"></td>
+        <td><input name="expiry[]"></td>
+        <td><input name="qty[]"></td>
+        <td><input name="rate[]"></td>
+    `;
 }
-
 </script>
 
-{% endblock %}
+</body>
+</html>
