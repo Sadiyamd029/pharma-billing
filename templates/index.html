@@ -1,41 +1,75 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Pharma Billing</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block content %}
 
-<h2>Pharma Billing</h2>
+<div class="card">
+<h2>Billing</h2>
 
-<form method="POST" action="/billing">
+<form method="POST">
 
-    <div id="rows">
-        <div>
-            Name: <input type="text" name="name">
-            Batch: <input type="text" name="batch">
-            Qty: <input type="number" name="qty">
-            Rate: <input type="number" name="rate">
-        </div>
-    </div>
+<input name="party" placeholder="Party Name"><br><br>
 
-    <br>
-    <button type="button" onclick="addRow()">Add Row</button>
-    <button type="submit">Generate Bill</button>
+<table id="billTable">
+<tr>
+<th>Medicine</th>
+<th>Batch</th>
+<th>Qty</th>
+<th>Rate</th>
+<th>GST</th>
+</tr>
+
+<tr>
+<td><input name="name"></td>
+<td><input name="batch"></td>
+<td><input name="qty"></td>
+<td><input name="rate"></td>
+<td><input name="gst"></td>
+</tr>
+
+</table>
+
+<br>
+<button type="button" onclick="addRow()">+ Add Row</button>
+<button type="submit">Generate Bill</button>
 
 </form>
+</div>
+
+
+<div class="card" id="invoice">
+<h3>Invoice</h3>
+
+<table>
+<tr>
+<th>Name</th><th>Batch</th><th>Qty</th><th>Total</th>
+</tr>
+
+{% for i in items %}
+<tr>
+<td>{{ i.name }}</td>
+<td>{{ i.batch }}</td>
+<td>{{ i.qty }}</td>
+<td>{{ i.amount }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<h3>Total: ₹{{ total }}</h3>
+
+<button onclick="window.print()">🖨 Print</button>
+</div>
+
 
 <script>
-function addRow() {
-    let div = document.createElement("div");
-    div.innerHTML = `
-        Name: <input type="text" name="name">
-        Batch: <input type="text" name="batch">
-        Qty: <input type="number" name="qty">
-        Rate: <input type="number" name="rate">
-    `;
-    document.getElementById("rows").appendChild(div);
+function addRow(){
+    let row = document.getElementById("billTable").insertRow();
+    row.innerHTML = `
+    <td><input name="name"></td>
+    <td><input name="batch"></td>
+    <td><input name="qty"></td>
+    <td><input name="rate"></td>
+    <td><input name="gst"></td>`;
 }
 </script>
 
-</body>
-</html>
+{% endblock %}
