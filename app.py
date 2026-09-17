@@ -60,13 +60,12 @@ def login():
 # 🔓 LOGOUT
 @app.route("/logout")
 def logout():
-    session.pop("user", None)
-    session.pop("role", None)
+    session.clear()
     return redirect("/login")
 
 
 # 🧾 BILLING
-@app.route("/billing", methods=["GET", "POST"])
+@app.route('/billing', methods=['GET', 'POST'])
 @login_required
 def index():
     total = 0
@@ -107,107 +106,24 @@ def index():
                 "amount": round(total_item, 2)
             })
 
-    return render_template("index.html", items=items, total=round(total, 2))
+        # ✅ STORE IN SESSION (IMPORTANT)
+        session["invoice_items"] = items
+        session["invoice_total"] = round(total, 2)
 
-
-# ➕ ADD STOCK
-@app.route("/add_stock", methods=["GET", "POST"])
-@login_required
-def add_stock():
-    if request.method == "POST":
-        add_medicine(
-            request.form.get("name"),
-            request.form.get("batch"),
-            request.form.get("expiry"),
-            int(request.form.get("stock"))
-        )
-
-    medicines = get_all_medicines()
-    return render_template("add_stock.html", medicines=medicines)
-
-
-# ✏️ EDIT MEDICINE
-@app.route("/edit/<name>/<batch>", methods=["GET", "POST"])
-@login_required
-def edit(name, batch):
-    if request.method == "POST":
-        stock = request.form.get("stock")
-        update_medicine(name, batch, stock)
-        return redirect("/add_stock")
-
-    return f"""
-    <h2>Edit {name} ({batch})</h2>
-    <form method="POST">
-        <input name="stock" placeholder="New Stock">
-        <button>Update</button>
-    </form>
-    """
-
-
-# ❌ DELETE MEDICINE
-@app.route("/delete/<name>/<batch>")
-@login_required
-def delete(name, batch):
-    delete_medicine(name, batch)
-    return redirect("/add_stock")
-
-
-# ⚠️ ALERTS
-@app.route("/alerts")
-@login_required
-def alerts():
-    low_stock, expiry_soon = get_alerts()
     return render_template(
-        "alerts.html",
-        low_stock=low_stock,
-        expiry_soon=expiry_soon
+        "index.html",
+        items=session.get("invoice_items", []),
+        total=session.get("invoice_total", 0)
     )
 
 
-# 📊 DASHBOARD
-@app.route("/dashboard")
-@login_required
-def dashboard():
-    import traceback
-    try:
-        medicines = get_all_medicines()
-
-        total_medicines = len(medicines) if medicines else 0
-        total_stock = sum([m[3] for m in medicines]) if medicines else 0
-
-        low_stock, expiry_soon = get_alerts()
-
-        return render_template(
-            "dashboard.html",
-            total_medicines=total_medicines,
-            total_stock=total_stock,
-            low_stock=len(low_stock),
-            expiry_soon=len(expiry_soon)
-        )
-
-    except Exception as e:
-        return f"<pre>{traceback.format_exc()}</pre>"
-
-
-# 📊 CHART DATA
-@app.route("/chart_data")
-@login_required
-def chart_data():
-    medicines = get_all_medicines()
-
-    labels = [m[0] for m in medicines]
-    stock = [m[3] for m in medicines]
-
-    return {
-        "labels": labels,
-        "stock": stock
-    }
-
-
-# 🧾 DOWNLOAD PDF
-@app.route("/download_pdf")
+# 📄 DOWNLOAD PDF (FIXED)
+@app.route("/download_pdf", methods=["GET"])
 @login_required
 def download_pdf():
+    items = session.get("invoice_items", [])
+    total = session.get("invoice_total", 0)
+
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
 
@@ -219,6 +135,7 @@ def download_pdf():
     y -= 40
 
     c.setFont("Helvetica", 10)
+
     headers = ["Name", "Batch", "Qty", "Rate", "GST", "Total"]
     x = [50, 120, 200, 260, 320, 380]
 
@@ -227,19 +144,17 @@ def download_pdf():
 
     y -= 20
 
-    items = request.args.get("items")
+    for item in items:
+        c.drawString(50, y, str(item["name"]))
+        c.drawString(120, y, str(item["batch"]))
+        c.drawString(200, y, str(item["qty"]))
+        c.drawString(260, y, str(item["rate"]))
+        c.drawString(320, y, str(item["gst"]))
+        c.drawString(380, y, str(item["amount"]))
+        y -= 20
 
-    if items:
-        items = json.loads(items)
-
-        for item in items:
-            c.drawString(50, y, str(item["name"]))
-            c.drawString(120, y, str(item["batch"]))
-            c.drawString(200, y, str(item["qty"]))
-            c.drawString(260, y, str(item["rate"]))
-            c.drawString(320, y, str(item["gst"]))
-            c.drawString(380, y, str(item["amount"]))
-            y -= 20
+    y -= 20
+    c.drawString(50, y, f"Total: {total}")
 
     c.save()
     buffer.seek(0)
@@ -252,10 +167,8 @@ def download_pdf():
     )
 
 
-# 🧠 INIT DB
+# 🧠 INIT
 init_db()
-
-# 👤 DEFAULT USER
 create_user("admin", "irfan1016", "admin")
 
 
