@@ -1,151 +1,59 @@
-from flask import Flask, render_template, request, redirect, session
-import sqlite3
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
-app.secret_key = "secret123"
 
-# ---------------- DATABASE ----------------
-def get_db():
-    return sqlite3.connect("pharma.db")
-
-def init_db():
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS medicines(
-        name TEXT,
-        batch TEXT,
-        expiry TEXT,
-        stock INTEGER
-    )
-    """)
-
-    conn.commit()
-    conn.close()
-
-init_db()
-
-# ---------------- LOGIN ----------------
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-
-        # ✅ FIXED PASSWORD
-        if username == "admin" and password == "irfan1016":
-            session["user"] = username
-            return redirect("/dashboard")
-        else:
-            return "Invalid login"
-
-    return render_template("login.html")
-
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
-
-
-# ---------------- HOME ----------------
-@app.route("/")
+@app.route('/')
 def home():
-    return redirect("/login")
+    return render_template('index.html')
 
-
-# ---------------- DASHBOARD ----------------
-@app.route("/dashboard")
-def dashboard():
-    if "user" not in session:
-        return redirect("/login")
-
-    return render_template("dashboard.html")
-
-
-# ---------------- BILLING ----------------
-@app.route("/billing", methods=["GET", "POST"])
+@app.route('/billing')
 def billing():
-    if "user" not in session:
-        return redirect("/login")
+    return render_template('index.html')
 
+@app.route('/invoice', methods=['POST'])
+def invoice():
     items = []
+
+    names = request.form.getlist('name')
+    batch = request.form.getlist('batch')
+    qty = request.form.getlist('qty')
+    rate = request.form.getlist('rate')
+
     total = 0
 
-    if request.method == "POST":
-        names = request.form.getlist("name")
-        batches = request.form.getlist("batch")
-        qtys = request.form.getlist("qty")
-        rates = request.form.getlist("rate")
+    for i in range(len(names)):
+        try:
+            q = float(qty[i])
+            r = float(rate[i])
+            item_total = q * r
+            total += item_total
 
-        for i in range(len(names)):
-            try:
-                qty = float(qtys[i])
-                rate = float(rates[i])
-                amount = qty * rate
-                total += amount
+            items.append({
+                "name": names[i],
+                "batch": batch[i],
+                "qty": q,
+                "total": item_total
+            })
+        except:
+            continue
 
-                items.append({
-                    "name": names[i],
-                    "batch": batches[i],
-                    "qty": qty,
-                    "amount": round(amount, 2)
-                })
-            except:
-                pass
-
-    return render_template("index.html", items=items, total=round(total, 2))
+    return render_template('invoice.html', items=items, total=total)
 
 
-# ---------------- STOCK ----------------
-@app.route("/add_stock", methods=["GET", "POST"])
+# 🔥 ADD THESE ROUTES (your missing pages)
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/add_stock')
 def add_stock():
-    if "user" not in session:
-        return redirect("/login")
+    return render_template('add_stock.html')
 
-    conn = get_db()
-    cur = conn.cursor()
-
-    if request.method == "POST":
-        name = request.form.get("name")
-        batch = request.form.get("batch")
-        expiry = request.form.get("expiry")
-        stock = request.form.get("stock")
-
-        if stock:
-            stock = int(stock)
-        else:
-            stock = 0
-
-        cur.execute("INSERT INTO medicines VALUES (?, ?, ?, ?)",
-                    (name, batch, expiry, stock))
-        conn.commit()
-
-    cur.execute("SELECT * FROM medicines")
-    medicines = cur.fetchall()
-    conn.close()
-
-    return render_template("stock.html", medicines=medicines)
-
-
-# ---------------- ALERTS ----------------
-@app.route("/alerts")
+@app.route('/alerts')
 def alerts():
-    if "user" not in session:
-        return redirect("/login")
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM medicines WHERE stock < 5")
-    low_stock = cur.fetchall()
-
-    conn.close()
-
-    return render_template("alerts.html", medicines=low_stock)
+    return render_template('alerts.html')
 
 
-# ---------------- RUN ----------------
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
