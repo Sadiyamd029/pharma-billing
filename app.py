@@ -25,7 +25,6 @@ def home():
 @app.route('/billing')
 def billing():
     return render_template('index.html')
-
 # INVOICE
 @app.route('/invoice', methods=['POST'])
 def invoice():
