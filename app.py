@@ -1,10 +1,9 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect
 from db import get_all_medicines, get_alerts
-from flask import redirect
 
 app = Flask(__name__)
 
-# 🔥 CHART DATA
+# CHART DATA
 @app.route("/chart_data")
 def chart_data():
     medicines = get_all_medicines()
@@ -17,18 +16,15 @@ def chart_data():
         "stock": stock
     })
 
-
 # HOME
 @app.route('/')
 def home():
     return render_template('index.html')
 
-
 # BILLING
 @app.route('/billing')
 def billing():
     return render_template('index.html')
-
 
 # INVOICE
 @app.route('/invoice', methods=['POST'])
@@ -53,15 +49,19 @@ def invoice():
                 "name": names[i],
                 "batch": batch[i],
                 "qty": q,
-                "amount": item_total   # ✅ fixed key name
+                "amount": item_total
             })
         except:
             continue
 
     return render_template('invoice.html', items=items, total=total)
 
+# LOGOUT
+@app.route('/logout')
+def logout():
+    return redirect('/')
 
-# DASHBOARD (fixed)
+# DASHBOARD
 @app.route('/dashboard')
 def dashboard():
     medicines = get_all_medicines()
@@ -73,15 +73,14 @@ def dashboard():
         'dashboard.html',
         total_medicines=total_medicines,
         total_stock=total_stock,
-        low_stock=0,        # temporary
-        expiry_soon=0       # temporary
+        low_stock=0,
+        expiry_soon=0
     )
-
 
 # STOCK PAGE
 @app.route('/add_stock', methods=["GET", "POST"])
 def add_stock():
-    from db import add_medicine  # import inside if not global
+    from db import add_medicine
 
     if request.method == "POST":
         add_medicine(
@@ -94,7 +93,7 @@ def add_stock():
     medicines = get_all_medicines()
     return render_template('add_stock.html', medicines=medicines)
 
-# EDIT ROUTE
+# EDIT
 @app.route("/edit/<name>/<batch>", methods=["GET", "POST"])
 def edit(name, batch):
     import sqlite3
@@ -118,7 +117,7 @@ def edit(name, batch):
 
     return render_template("edit.html", name=name, batch=batch)
 
-# DELETE ROUTE
+# DELETE
 @app.route("/delete/<name>/<batch>")
 def delete(name, batch):
     import sqlite3
@@ -136,8 +135,7 @@ def delete(name, batch):
 
     return redirect("/add_stock")
 
-
-# ✅ ALERTS PAGE (PLACE HERE — replace old one)
+# ALERTS
 @app.route('/alerts')
 def alerts():
     low_stock, expiry_soon = get_alerts()
@@ -147,3 +145,6 @@ def alerts():
         low_stock=low_stock,
         expiry_soon=expiry_soon
     )
+
+if __name__ == "__main__":
+    app.run(debug=True)
