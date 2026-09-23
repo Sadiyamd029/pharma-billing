@@ -1,147 +1,116 @@
-from flask import Flask, render_template, request, redirect, session
-import sqlite3
 import os
+from functools import wraps
+
+from flask import Flask, render_template, request, redirect, session, jsonify, url_for
+
+import db
 
 app = Flask(__name__)
-app.secret_key = "secret123"
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
-# ---------------- DATABASE ----------------
-def get_db():
-    return sqlite3.connect("pharma.db")
-
-def init_db():
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS medicines(
-        name TEXT,
-        batch TEXT,
-        expiry TEXT,
-        stock INTEGER
-    )
-    """)
-
-    conn.commit()
-    conn.close()
-
-init_db()
-
-# ---------------- LOGIN ----------------
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-
-        if username == "admin" and password == "1234":
-            session["user"] = username
-            return redirect("/dashboard")
-        else:
-            return "Invalid login"
-
-    return render_template("login.html")
+db.init_db()
 
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user" not in session:
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+    return wrapped
 
 
 # ---------------- HOME ----------------
 @app.route("/")
 def home():
-    if "user" in session:
-        return redirect("/dashboard")
-    return redirect("/login")
+    return redirect(url_for("dashboard") if "user" in session else url_for("login"))
+
+
+# ---------------- LOGIN / SIGNUP ----------------
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        role = db.check_user(username, password)
+        if role:
+            session["user"] = username
+            session["role"] = role
+            return redirect(url_for("dashboard"))
+        return render_template("login.html", error="Invalid username or password")
+    return render_template("login.html")
+
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        if not username or not password:
+            return render_template("signup.html", error="Username and password are required")
+        if db.create_user(username, password):
+            return redirect(url_for("login"))
+        return render_template("signup.html", error="That username is already taken")
+    return render_template("signup.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 
 # ---------------- DASHBOARD ----------------
 @app.route("/dashboard")
+@login_required
 def dashboard():
-    if "user" not in session:
-        return redirect("/login")
+    total_medicines, total_stock, low_stock, expiry_soon = db.get_dashboard_stats()
+    return render_template(
+        "dashboard.html",
+        total_medicines=total_medicines,
+        total_stock=total_stock,
+        low_stock=low_stock,
+        expiry_soon=expiry_soon,
+    )
 
-    return render_template("dashboard.html")
+
+@app.route("/chart_data")
+@login_required
+def chart_data():
+    labels, stock = db.get_chart_data()
+    return jsonify({"labels": labels, "stock": stock})
 
 
 # ---------------- BILLING ----------------
 @app.route("/billing", methods=["GET", "POST"])
+@login_required
 def billing():
-    if "user" not in session:
-        return redirect("/login")
-
     items = []
-    total = 0
+    total = 0.0
 
     if request.method == "POST":
         names = request.form.getlist("name")
         batches = request.form.getlist("batch")
         qtys = request.form.getlist("qty")
         rates = request.form.getlist("rate")
+        gsts = request.form.getlist("gst")
 
         for i in range(len(names)):
+            if not names[i]:
+                continue
             try:
                 qty = float(qtys[i])
                 rate = float(rates[i])
-                amount = qty * rate
-                total += amount
+                gst = float(gsts[i]) if gsts[i] else 0.0
+            except ValueError:
+                continue
 
-                items.append({
-                    "name": names[i],
-                    "batch": batches[i],
-                    "qty": qty,
-                    "amount": amount
-                })
-            except:
-                pass
+            subtotal = qty * rate
+            amount = subtotal + (subtotal * gst / 100)
+            total += amount
 
-    return render_template("index.html", items=items, total=total)
-
-
-# ---------------- STOCK ----------------
-@app.route("/add_stock", methods=["GET", "POST"])
-def add_stock():
-    if "user" not in session:
-        return redirect("/login")
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    if request.method == "POST":
-        name = request.form.get("name")
-        batch = request.form.get("batch")
-        expiry = request.form.get("expiry")
-        stock = request.form.get("stock")
-
-        cur.execute("INSERT INTO medicines VALUES (?, ?, ?, ?)",
-                    (name, batch, expiry, stock))
-        conn.commit()
-
-    cur.execute("SELECT * FROM medicines")
-    medicines = cur.fetchall()
-    conn.close()
-
-    return render_template("stock.html", medicines=medicines)
-
-
-# ---------------- ALERTS ----------------
-@app.route("/alerts")
-def alerts():
-    if "user" not in session:
-        return redirect("/login")
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM medicines WHERE stock < 5")
-    low_stock = cur.fetchall()
-
-    conn.close()
-
-    return render_template("alerts.html", medicines=low_stock)
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
+            items.append({
+                "name": names[i],
+                "batch": batches[i],
+                "qty": qty,
+                "amount":
