@@ -1,19 +1,20 @@
-from flask import Flask, render_template, request, redirect, session
 import sqlite3
 
-app = Flask(__name__)
-app.secret_key = "secret123"
-
-# ---------------- DATABASE ----------------
+# ---------------- CONNECT ----------------
 def get_db():
-    return sqlite3.connect("pharma.db")
+    conn = sqlite3.connect("pharma.db")
+    conn.row_factory = sqlite3.Row
+    return conn
 
+
+# ---------------- INIT DB ----------------
 def init_db():
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS medicines(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         batch TEXT,
         expiry TEXT,
@@ -24,128 +25,101 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
 
-# ---------------- LOGIN ----------------
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-
-        # ✅ FIXED PASSWORD
-        if username == "admin" and password == "irfan1016":
-            session["user"] = username
-            return redirect("/dashboard")
-        else:
-            return "Invalid login"
-
-    return render_template("login.html")
-
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
-
-
-# ---------------- HOME ----------------
-@app.route("/")
-def home():
-    return redirect("/login")
-
-
-# ---------------- DASHBOARD ----------------
-@app.route("/dashboard")
-def dashboard():
-    if "user" not in session:
-        return redirect("/login")
-
-    return render_template("dashboard.html")
-
-
-# ---------------- BILLING ----------------
-@app.route("/billing", methods=["GET", "POST"])
-def billing():
-    if "user" not in session:
-        return redirect("/login")
-
-    items = []
-    total = 0
-
-    if request.method == "POST":
-        names = request.form.getlist("name")
-        batches = request.form.getlist("batch")
-        qtys = request.form.getlist("qty")
-        rates = request.form.getlist("rate")
-
-        for i in range(len(names)):
-            try:
-                qty = float(qtys[i])
-                rate = float(rates[i])
-                amount = qty * rate
-                total += amount
-
-                items.append({
-                    "name": names[i],
-                    "batch": batches[i],
-                    "qty": qty,
-                    "amount": round(amount, 2)
-                })
-            except:
-                pass
-
-    return render_template("index.html", items=items, total=round(total, 2))
-
-
-# ---------------- STOCK ----------------
-@app.route("/add_stock", methods=["GET", "POST"])
-def add_stock():
-    if "user" not in session:
-        return redirect("/login")
-
+# ---------------- ADD MEDICINE ----------------
+def add_medicine(name, batch, expiry, stock):
     conn = get_db()
     cur = conn.cursor()
 
-    if request.method == "POST":
-        name = request.form.get("name")
-        batch = request.form.get("batch")
-        expiry = request.form.get("expiry")
-        stock = request.form.get("stock")
+    cur.execute(
+        "INSERT INTO medicines (name, batch, expiry, stock) VALUES (?, ?, ?, ?)",
+        (name, batch, expiry, stock)
+    )
 
-        if stock:
-            stock = int(stock)
-        else:
-            stock = 0
-
-        cur.execute("INSERT INTO medicines VALUES (?, ?, ?, ?)",
-                    (name, batch, expiry, stock))
-        conn.commit()
-
-    cur.execute("SELECT * FROM medicines")
-    medicines = cur.fetchall()
+    conn.commit()
     conn.close()
 
-    return render_template("stock.html", medicines=medicines)
+
+# ---------------- GET ALL ----------------
+def get_all_medicines():
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM medicines")
+    data = cur.fetchall()
+
+    conn.close()
+    return data
+
+
+# ---------------- REDUCE STOCK ----------------
+def reduce_stock(name, batch, qty):
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE medicines
+        SET stock = stock - ?
+        WHERE name = ? AND batch = ?
+    """, (qty, name, batch))
+
+    conn.commit()
+    conn.close()
 
 
 # ---------------- ALERTS ----------------
-@app.route("/alerts")
-def alerts():
-    if "user" not in session:
-        return redirect("/login")
-
+def get_alerts():
     conn = get_db()
     cur = conn.cursor()
 
+    # low stock (<5)
     cur.execute("SELECT * FROM medicines WHERE stock < 5")
     low_stock = cur.fetchall()
 
+    # expiry soon (simple version - you can improve later)
+    cur.execute("SELECT * FROM medicines WHERE expiry != ''")
+    expiry_soon = cur.fetchall()
+
     conn.close()
 
-    return render_template("alerts.html", medicines=low_stock)
+    return low_stock, expiry_soon
 
 
-# ---------------- RUN ----------------
-if __name__ == "__main__":
-    app.run(debug=True)
+# ---------------- USER SYSTEM ----------------
+def create_user(username, password):
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT
+    )
+    """)
+
+    try:
+        cur.execute(
+            "INSERT INTO users (username, password) VALUES (?, ?)",
+            (username, password)
+        )
+    except:
+        pass
+
+    conn.commit()
+    conn.close()
+
+
+def check_user(username, password):
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT * FROM users
+        WHERE username = ? AND password = ?
+    """, (username, password))
+
+    user = cur.fetchone()
+
+    conn.close()
+    return user is not None
