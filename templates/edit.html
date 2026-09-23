@@ -5,12 +5,14 @@
 <h2>Edit Medicine</h2>
 
 <form method="POST">
-    <p>Name: {{ name }}</p>
-    <p>Batch: {{ batch }}</p>
+
+    <p><strong>Name:</strong> {{ name }}</p>
+    <p><strong>Batch:</strong> {{ batch }}</p>
 
     <input name="stock" placeholder="New Stock" required><br><br>
 
-    <button>Update</button>
+    <button type="submit">Update</button>
+
 </form>
 </div>
 
