@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from db import get_all_medicines   # ✅ import this
+from db import get_all_medicines, get_alerts
 
 app = Flask(__name__)
 
@@ -84,11 +84,13 @@ def add_stock():
     return render_template('add_stock.html', medicines=medicines)
 
 
-# ALERTS PAGE
+# ✅ ALERTS PAGE (PLACE HERE — replace old one)
 @app.route('/alerts')
 def alerts():
-    return render_template('alerts.html', low_stock=[], expiry_soon=[])
+    low_stock, expiry_soon = get_alerts()
 
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    return render_template(
+        'alerts.html',
+        low_stock=low_stock,
+        expiry_soon=expiry_soon
+    )
