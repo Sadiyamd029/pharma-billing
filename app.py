@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from db import get_all_medicines, get_alerts
+from flask import redirect
 
 app = Flask(__name__)
 
@@ -78,10 +79,62 @@ def dashboard():
 
 
 # STOCK PAGE
-@app.route('/add_stock')
+@app.route('/add_stock', methods=["GET", "POST"])
 def add_stock():
+    from db import add_medicine  # import inside if not global
+
+    if request.method == "POST":
+        add_medicine(
+            request.form.get("name"),
+            request.form.get("batch"),
+            request.form.get("expiry"),
+            int(request.form.get("stock"))
+        )
+
     medicines = get_all_medicines()
     return render_template('add_stock.html', medicines=medicines)
+
+# EDIT ROUTE
+@app.route("/edit/<name>/<batch>", methods=["GET", "POST"])
+def edit(name, batch):
+    import sqlite3
+
+    if request.method == "POST":
+        new_stock = request.form.get("stock")
+
+        conn = sqlite3.connect("pharma.db")
+        cur = conn.cursor()
+
+        cur.execute("""
+            UPDATE medicines
+            SET stock = ?
+            WHERE name = ? AND batch = ?
+        """, (new_stock, name, batch))
+
+        conn.commit()
+        conn.close()
+
+        return redirect("/add_stock")
+
+    return render_template("edit.html", name=name, batch=batch)
+
+# DELETE ROUTE
+@app.route("/delete/<name>/<batch>")
+def delete(name, batch):
+    import sqlite3
+
+    conn = sqlite3.connect("pharma.db")
+    cur = conn.cursor()
+
+    cur.execute("""
+        DELETE FROM medicines
+        WHERE name = ? AND batch = ?
+    """, (name, batch))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/add_stock")
 
 
 # ✅ ALERTS PAGE (PLACE HERE — replace old one)
