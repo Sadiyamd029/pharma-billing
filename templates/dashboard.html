@@ -50,31 +50,47 @@
 
 <script>
 async function loadCharts() {
-    let res = await fetch("/chart_data");
-    let data = await res.json();
+    try {
+        let res = await fetch("/chart_data");
 
-    // PIE CHART
-    new Chart(document.getElementById("stockChart"), {
-        type: "pie",
-        data: {
-            labels: data.labels,
-            datasets: [{
-                data: data.stock
-            }]
+        if (!res.ok) {
+            console.log("Chart API not found");
+            return;
         }
-    });
 
-    // BAR CHART
-    new Chart(document.getElementById("barChart"), {
-        type: "bar",
-        data: {
-            labels: data.labels,
-            datasets: [{
-                label: "Stock",
-                data: data.stock
-            }]
+        let data = await res.json();
+
+        if (!data.labels || !data.stock) {
+            console.log("Invalid chart data");
+            return;
         }
-    });
+
+        // PIE CHART
+        new Chart(document.getElementById("stockChart"), {
+            type: "pie",
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    data: data.stock
+                }]
+            }
+        });
+
+        // BAR CHART
+        new Chart(document.getElementById("barChart"), {
+            type: "bar",
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: "Stock",
+                    data: data.stock
+                }]
+            }
+        });
+
+    } catch (error) {
+        console.log("Chart error:", error);
+    }
 }
 
 loadCharts();
