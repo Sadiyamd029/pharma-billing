@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, jsonify, redirect
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from db import get_all_medicines, get_alerts
 
 app = Flask(__name__)
+app.secret_key = "sa0206"
 
 # CHART DATA
 @app.route("/chart_data")
