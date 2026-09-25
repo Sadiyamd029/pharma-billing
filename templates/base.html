@@ -5,7 +5,9 @@
 <title>Pharma System</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#1e3c72">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
 <style>
 
 /* 🌌 particles background */
@@ -177,6 +179,10 @@ particlesJS("particles-js", {
     }
 });
 </script>
-
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/static/sw.js');
+}
+</script>
 </body>
 </html>
