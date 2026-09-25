@@ -23,20 +23,14 @@
 </tr>
 
 {% for m in medicines %}
-<tr>
-<td>{{ m[0] }}</td>
-<td>{{ m[1] }}</td>
-<td>{{ m[2] }}</td>
-<td>{{ m[3] }}</td>
-
+<tr style="{{ 'color:#f87171;' if m['stock']|int < 5 else '' }}">
+<td>{{ m['name'] }}</td>
+<td>{{ m['batch'] }}</td>
+<td>{{ m['expiry'] }}</td>
+<td>{{ m['stock'] }}</td>
 <td>
-    <a href="/edit/{{ m[0] }}/{{ m[1] }}">
-        <button>Edit</button>
-    </a>
-
-    <a href="/delete/{{ m[0] }}/{{ m[1] }}">
-        <button style="background:red;">Delete</button>
-    </a>
+    <a href="/edit/{{ m['name'] }}/{{ m['batch'] }}"><button>Edit</button></a>
+    <a href="/delete/{{ m['name'] }}/{{ m['batch'] }}"><button style="background:red;">Delete</button></a>
 </td>
 </tr>
 {% endfor %}
