@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-from db import get_all_medicines, get_alerts, init_db
+from db import get_all_medicines, get_alerts, init_db, get_db
 
 app = Flask(__name__)
 app.secret_key = "sa0206"
@@ -27,99 +27,27 @@ def billing():
     return render_template('index.html')
 
 # INVOICE
-# INVOICE
 @app.route('/invoice', methods=['POST'])
 def invoice():
-    names   = request.form.getlist('name')
-    mfrs    = request.form.getlist('mfr')
-    hsns    = request.form.getlist('hsn')
-    packs   = request.form.getlist('pack')
-    batches = request.form.getlist('batch')
-    expiry  = request.form.getlist('expiry')
-    mrps    = request.form.getlist('mrp')
-    qtys    = request.form.getlist('qty')
-    frees   = request.form.getlist('free')
-    rates   = request.form.getlist('rate')
-    discs   = request.form.getlist('disc')
-    gsts    = request.form.getlist('gst')
-
-    party = request.form.get('party', '')
-
     items = []
-    total_taxable = 0
-    total_cgst = 0
-    total_sgst = 0
-    net_amount = 0
+    names = request.form.getlist('name')
+    batch = request.form.getlist('batch')
+    qty = request.form.getlist('qty')
+    rate = request.form.getlist('rate')
+    total = 0
 
     for i in range(len(names)):
-        if not names[i]:
-            continue
         try:
-            qty  = float(qtys[i]) if qtys[i] else 0
-            rate = float(rates[i]) if rates[i] else 0
-            free = float(frees[i]) if frees[i] else 0
-            disc = float(discs[i]) if discs[i] else 0
-            gst  = float(gsts[i]) if gsts[i] else 0
-            mrp  = float(mrps[i]) if mrps[i] else 0
-        except ValueError:
+            q = float(qty[i])
+            r = float(rate[i])
+            item_total = q * r
+            total += item_total
+            items.append({"name": names[i], "batch": batch[i], "qty": q, "amount": item_total})
+        except:
             continue
 
-        gross = qty * rate
-        disc_amt = gross * disc / 100
-        taxable = gross - disc_amt
+    return render_template('invoice.html', items=items, total=total)
 
-        cgst_rate = gst / 2
-        sgst_rate = gst / 2
-        cgst_amt = taxable * cgst_rate / 100
-        sgst_amt = taxable * sgst_rate / 100
-
-        line_total = taxable + cgst_amt + sgst_amt
-
-        total_taxable += taxable
-        total_cgst += cgst_amt
-        total_sgst += sgst_amt
-        net_amount += line_total
-
-        items.append({
-            "name": names[i],
-            "mfr": mfrs[i] if i < len(mfrs) else "",
-            "hsn": hsns[i] if i < len(hsns) else "",
-            "pack": packs[i] if i < len(packs) else "",
-            "batch": batches[i],
-            "expiry": expiry[i] if i < len(expiry) else "",
-            "mrp": round(mrp, 2),
-            "qty": qty,
-            "free": free,
-            "rate": rate,
-            "disc": disc,
-            "taxable": round(taxable, 2),
-            "gst_rate": gst,
-            "cgst_rate": cgst_rate,
-            "cgst_amt": round(cgst_amt, 2),
-            "sgst_rate": sgst_rate,
-            "sgst_amt": round(sgst_amt, 2),
-            "amount": round(line_total, 2),
-        })
-
-    tax_summary = {}
-    for it in items:
-        r = it["gst_rate"]
-        if r not in tax_summary:
-            tax_summary[r] = {"rate": r, "taxable": 0, "cgst": 0, "sgst": 0}
-        tax_summary[r]["taxable"] += it["taxable"]
-        tax_summary[r]["cgst"] += it["cgst_amt"]
-        tax_summary[r]["sgst"] += it["sgst_amt"]
-
-    return render_template(
-        'invoice.html',
-        items=items,
-        party=party,
-        total_taxable=round(total_taxable, 2),
-        total_cgst=round(total_cgst, 2),
-        total_sgst=round(total_sgst, 2),
-        total=round(net_amount, 2),
-        tax_summary=list(tax_summary.values()),
-    )
 # LOGIN
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -177,17 +105,15 @@ def add_stock():
 # EDIT
 @app.route("/edit/<name>/<batch>", methods=["GET", "POST"])
 def edit(name, batch):
-    import sqlite3
-
     if request.method == "POST":
         new_stock = request.form.get("stock")
 
-        conn = sqlite3.connect("pharma.db")
+        conn = get_db()
         cur = conn.cursor()
         cur.execute("""
             UPDATE medicines
-            SET stock = ?
-            WHERE name = ? AND batch = ?
+            SET stock = %s
+            WHERE name = %s AND batch = %s
         """, (new_stock, name, batch))
         conn.commit()
         conn.close()
@@ -199,13 +125,11 @@ def edit(name, batch):
 # DELETE
 @app.route("/delete/<name>/<batch>")
 def delete(name, batch):
-    import sqlite3
-
-    conn = sqlite3.connect("pharma.db")
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("""
         DELETE FROM medicines
-        WHERE name = ? AND batch = ?
+        WHERE name = %s AND batch = %s
     """, (name, batch))
     conn.commit()
     conn.close()
