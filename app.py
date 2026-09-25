@@ -27,10 +27,13 @@ def billing():
     return render_template('index.html')
 
 # INVOICE
+# INVOICE
 @app.route('/invoice', methods=['POST'])
 def invoice():
     names   = request.form.getlist('name')
+    mfrs    = request.form.getlist('mfr')
     hsns    = request.form.getlist('hsn')
+    packs   = request.form.getlist('pack')
     batches = request.form.getlist('batch')
     expiry  = request.form.getlist('expiry')
     mrps    = request.form.getlist('mrp')
@@ -79,7 +82,9 @@ def invoice():
 
         items.append({
             "name": names[i],
+            "mfr": mfrs[i] if i < len(mfrs) else "",
             "hsn": hsns[i] if i < len(hsns) else "",
+            "pack": packs[i] if i < len(packs) else "",
             "batch": batches[i],
             "expiry": expiry[i] if i < len(expiry) else "",
             "mrp": round(mrp, 2),
@@ -96,7 +101,6 @@ def invoice():
             "amount": round(line_total, 2),
         })
 
-    # group totals by GST rate, like the sample invoice's tax summary table
     tax_summary = {}
     for it in items:
         r = it["gst_rate"]
@@ -116,7 +120,6 @@ def invoice():
         total=round(net_amount, 2),
         tax_summary=list(tax_summary.values()),
     )
-
 # LOGIN
 @app.route('/login', methods=['GET', 'POST'])
 def login():
