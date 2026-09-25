@@ -2,7 +2,6 @@
 {% block content %}
 
 <style>
-/* Table styling */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -14,32 +13,21 @@ th, td {
     text-align: center;
 }
 
-/* ✅ PRINT FIX */
+th {
+    font-size: 12px;
+}
+
+td input {
+    min-width: 70px;
+}
+
 @media print {
-
-    body {
-        background: white !important;
-        color: black !important;
-    }
-
-    .navbar, button, a {
-        display: none !important;
-    }
-
-    #invoice {
-        display: block;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-    }
-
-    .card {
-        box-shadow: none;
-        background: white;
-    }
+    body { background: white !important; color: black !important; }
+    .navbar, button, a { display: none !important; }
+    #invoice { display: block; width: 100%; margin: 0; padding: 0; }
+    .card { box-shadow: none; background: white; }
 }
 </style>
-
 
 <div class="card">
 <h2>Billing</h2>
@@ -50,18 +38,28 @@ th, td {
 <table id="billTable">
 <tr>
 <th>Medicine</th>
+<th>HSN</th>
 <th>Batch</th>
+<th>Ex.Dt</th>
+<th>MRP</th>
 <th>Qty</th>
+<th>Free</th>
 <th>Rate</th>
-<th>GST</th>
+<th>Disc %</th>
+<th>GST %</th>
 </tr>
 
 <tr>
 <td><input name="name"></td>
+<td><input name="hsn"></td>
 <td><input name="batch"></td>
+<td><input name="expiry" type="month"></td>
+<td><input name="mrp"></td>
 <td><input name="qty"></td>
+<td><input name="free" placeholder="0"></td>
 <td><input name="rate"></td>
-<td><input name="gst"></td>
+<td><input name="disc" placeholder="0"></td>
+<td><input name="gst" placeholder="0"></td>
 </tr>
 
 </table>
@@ -72,7 +70,6 @@ th, td {
 
 </form>
 </div>
-
 
 <!-- ✅ INVOICE SECTION -->
 <div class="card" id="invoice">
@@ -102,16 +99,20 @@ th, td {
 <button onclick="window.print()">🖨 Print</button>
 </div>
 
-
 <script>
 function addRow(){
     let row = document.getElementById("billTable").insertRow();
     row.innerHTML = `
     <td><input name="name"></td>
+    <td><input name="hsn"></td>
     <td><input name="batch"></td>
+    <td><input name="expiry" type="month"></td>
+    <td><input name="mrp"></td>
     <td><input name="qty"></td>
+    <td><input name="free" placeholder="0"></td>
     <td><input name="rate"></td>
-    <td><input name="gst"></td>`;
+    <td><input name="disc" placeholder="0"></td>
+    <td><input name="gst" placeholder="0"></td>`;
 }
 </script>
 
