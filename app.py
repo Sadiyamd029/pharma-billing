@@ -1,16 +1,19 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-from db import get_all_medicines, get_alerts
+from db import get_all_medicines, get_alerts, init_db   # ✅ added init_db
 
 app = Flask(__name__)
 app.secret_key = "sa0206"
+
+init_db()   # ✅ IMPORTANT FIX (DB initialize)
 
 # CHART DATA
 @app.route("/chart_data")
 def chart_data():
     medicines = get_all_medicines()
 
-    labels = [m[0] for m in medicines]
-    stock = [m[3] for m in medicines]
+    # ✅ FIX: row object access
+    labels = [m["name"] for m in medicines]
+    stock = [m["stock"] for m in medicines]
 
     return jsonify({
         "labels": labels,
@@ -26,7 +29,7 @@ def home():
 @app.route('/billing')
 def billing():
     if 'user' not in session:
-        return redirect('/login')   # 👈 block access
+        return redirect('/login')
     return render_template('index.html')
 
 # INVOICE
@@ -59,26 +62,30 @@ def invoice():
 
     return render_template('invoice.html', items=items, total=total)
 
+# LOGIN
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        session['user'] = request.form.get('username')  # simple login
-        return redirect('/billing')  # go to dashboard
+        session['user'] = request.form.get('username')
+        return redirect('/billing')
     return render_template('login.html')
 
 # LOGOUT
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect('/login')   # 👈 THIS fixes your issue
+    return redirect('/login')   # ✅ already correct
 
 # DASHBOARD
 @app.route('/dashboard')
 def dashboard():
+    if 'user' not in session:   # ✅ added protection (prevents crash)
+        return redirect('/login')
+
     medicines = get_all_medicines()
 
     total_medicines = len(medicines)
-    total_stock = sum([m[3] for m in medicines]) if medicines else 0
+    total_stock = sum([int(m["stock"]) for m in medicines]) if medicines else 0   # ✅ safe int
 
     return render_template(
         'dashboard.html',
@@ -93,12 +100,18 @@ def dashboard():
 def add_stock():
     from db import add_medicine
 
+    if 'user' not in session:   # ✅ added protection
+        return redirect('/login')
+
     if request.method == "POST":
+        stock = request.form.get("stock")
+        stock = int(stock) if stock else 0   # ✅ FIX crash
+
         add_medicine(
             request.form.get("name"),
             request.form.get("batch"),
             request.form.get("expiry"),
-            int(request.form.get("stock"))
+            stock
         )
 
     medicines = get_all_medicines()
@@ -149,6 +162,9 @@ def delete(name, batch):
 # ALERTS
 @app.route('/alerts')
 def alerts():
+    if 'user' not in session:   # ✅ added protection
+        return redirect('/login')
+
     low_stock, expiry_soon = get_alerts()
 
     return render_template(
