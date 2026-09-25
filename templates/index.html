@@ -18,7 +18,7 @@ th {
 }
 
 td input {
-    min-width: 70px;
+    min-width: 60px;
 }
 
 @media print {
@@ -38,7 +38,9 @@ td input {
 <table id="billTable">
 <tr>
 <th>Medicine</th>
+<th>MFR</th>
 <th>HSN</th>
+<th>Pack</th>
 <th>Batch</th>
 <th>Ex.Dt</th>
 <th>MRP</th>
@@ -51,7 +53,9 @@ td input {
 
 <tr>
 <td><input name="name"></td>
+<td><input name="mfr"></td>
 <td><input name="hsn"></td>
+<td><input name="pack"></td>
 <td><input name="batch"></td>
 <td><input name="expiry" type="month"></td>
 <td><input name="mrp"></td>
@@ -104,7 +108,9 @@ function addRow(){
     let row = document.getElementById("billTable").insertRow();
     row.innerHTML = `
     <td><input name="name"></td>
+    <td><input name="mfr"></td>
     <td><input name="hsn"></td>
+    <td><input name="pack"></td>
     <td><input name="batch"></td>
     <td><input name="expiry" type="month"></td>
     <td><input name="mrp"></td>
