@@ -19,12 +19,15 @@ def chart_data():
 # HOME
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return redirect('/login')
 
 # BILLING
 @app.route('/billing')
 def billing():
+    if 'user' not in session:
+        return redirect('/login')   # 👈 block access
     return render_template('index.html')
+
 # INVOICE
 @app.route('/invoice', methods=['POST'])
 def invoice():
@@ -55,10 +58,18 @@ def invoice():
 
     return render_template('invoice.html', items=items, total=total)
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        session['user'] = request.form.get('username')  # simple login
+        return redirect('/billing')  # go to dashboard
+    return render_template('login.html')
+
 # LOGOUT
 @app.route('/logout')
 def logout():
-    return redirect('/')
+    session.clear()
+    return redirect('/login')   # 👈 THIS fixes your issue
 
 # DASHBOARD
 @app.route('/dashboard')
