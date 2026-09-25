@@ -1,10 +1,18 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from db import get_all_medicines, get_alerts, init_db, get_db
+import os
 
 app = Flask(__name__)
 app.secret_key = "sa0206"
 
 init_db()
+
+# Real credentials — set these on Render (Environment tab), don't leave the defaults in production
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "1234")
+
+# ... (chart_data, home, billing, invoice routes stay exactly as they are) ...
+
 
 # CHART DATA
 @app.route("/chart_data")
@@ -48,13 +56,22 @@ def invoice():
 
     return render_template('invoice.html', items=items, total=total)
 
+
 # LOGIN
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        session['user'] = request.form.get('username')
-        return redirect('/billing')
+        username = request.form.get('username', '')
+        password = request.form.get('password', '')
+
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session['user'] = username
+            return redirect('/billing')
+
+        return render_template('login.html', error="Invalid username or password")
+
     return render_template('login.html')
+
 
 # LOGOUT
 @app.route('/logout')
