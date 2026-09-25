@@ -4,27 +4,119 @@
     <title>Invoice</title>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
+            color: #000;
         }
 
-        h2 {
+        #invoice {
+            max-width: 900px;
+            margin: 0 auto;
+            border: 1px solid #000;
+        }
+
+        /* ---- Header ---- */
+        .inv-title {
             text-align: center;
+            font-weight: bold;
+            letter-spacing: 2px;
+            padding: 8px;
+            border-bottom: 1px solid #000;
         }
 
+        .inv-header {
+            display: flex;
+            border-bottom: 1px solid #000;
+        }
+
+        .inv-header .col {
+            flex: 1;
+            padding: 10px 14px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .inv-header .col:first-child {
+            border-right: 1px solid #000;
+        }
+
+        .inv-header .shop-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .inv-header .to-label {
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        /* ---- Items table ---- */
         table {
             width: 100%;
             border-collapse: collapse;
         }
 
         th, td {
-            padding: 10px;
+            padding: 8px 10px;
             text-align: center;
+            border-bottom: 1px solid #ccc;
+            font-size: 13px;
         }
 
         th {
             background-color: #f2f2f2;
+            border-bottom: 1px solid #000;
+            border-top: 1px solid #000;
+        }
+
+        td:nth-child(1), td:nth-child(2) {
+            text-align: left;
+        }
+
+        /* ---- Totals block ---- */
+        .inv-totals {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #000;
+            padding: 10px 14px;
+            font-size: 14px;
+        }
+
+        .inv-totals .net {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .inv-words {
+            padding: 8px 14px;
+            border-top: 1px solid #000;
+            font-size: 13px;
+        }
+
+        /* ---- Signature ---- */
+        .inv-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 30px 14px 14px;
+            border-top: 1px solid #000;
+            font-size: 13px;
+        }
+
+        .inv-footer .sign-box {
+            text-align: center;
+        }
+
+        .inv-footer .sign-line {
+            margin-top: 40px;
+            border-top: 1px solid #000;
+            padding-top: 4px;
+            width: 180px;
         }
 
         /* ✅ PRINT FIX */
@@ -32,9 +124,12 @@
             button {
                 display: none;
             }
-
             body {
                 margin: 0;
+                padding: 0;
+            }
+            #invoice {
+                border: none;
             }
         }
     </style>
@@ -44,34 +139,89 @@
 
 <div id="invoice">
 
-<h2>Invoice</h2>
+    <div class="inv-title">GST INVOICE</div>
 
-<table border="1">
-    <tr>
-        <th>Name</th>
-        <th>Batch</th>
-        <th>Qty</th>
-        <th>Rate</th>
-        <th>Total</th>
-    </tr>
+    <div class="inv-header">
+        <div class="col">
+            <div class="shop-name">Aushadhi Enterprises</div>
+            D.NO: 6D-10-15, Kathepu Veedhi Road, Eluru<br>
+            GSTIN: 37ABIFA1323R1Z6
+        </div>
+        <div class="col">
+            <div class="to-label">TO :</div>
+            {% if party %}{{ party }}{% else %}&nbsp;{% endif %}
+        </div>
+    </div>
 
-    {% for item in items %}
-    <tr>
-        <td>{{ item.name }}</td>
-        <td>{{ item.batch }}</td>
-        <td>{{ item.qty }}</td>
-        <td>{{ item.rate }}</td>
-        <td>{{ item.amount }}</td>
-    </tr>
-    {% endfor %}
-</table>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Batch</th>
+            <th>Qty</th>
+            <th>Rate</th>
+            <th>Total</th>
+        </tr>
 
-<h3>Total: ₹{{ total }}</h3>
+        {% for item in items %}
+        <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.batch }}</td>
+            <td>{{ item.qty }}</td>
+            <td>{{ item.rate }}</td>
+            <td>{{ item.amount }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="inv-totals">
+        <span>No. of Items: {{ items|length }}</span>
+        <span class="net">Net Amount: ₹{{ total }}</span>
+    </div>
+
+    <div class="inv-words" id="wordsLine">
+        In Words: <span id="amountInWords">—</span>
+    </div>
+
+    <div class="inv-footer">
+        <div>E. &amp; O.E.</div>
+        <div class="sign-box">
+            <div class="sign-line">Authorised Signatory</div>
+        </div>
+    </div>
 
 </div>
 
 <br>
-<button onclick="window.print()">Print</button>
+<div style="text-align:center;">
+    <button onclick="window.print()">Print</button>
+</div>
+
+<script>
+    // Converts the total shown on the page into words, same trick
+    // the sample invoice uses ("In Words: Rs. Three thousand ...").
+    function numberToWords(num) {
+        const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+            'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+            'Seventeen', 'Eighteen', 'Nineteen'];
+        const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+        function inWords(n) {
+            if (n < 20) return a[n];
+            if (n < 100) return b[Math.floor(n / 10)] + (n % 10 ? ' ' + a[n % 10] : '');
+            if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + inWords(n % 100) : '');
+            if (n < 100000) return inWords(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 ? ' ' + inWords(n % 1000) : '');
+            if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 ? ' ' + inWords(n % 100000) : '');
+            return n.toString();
+        }
+
+        return n === 0 ? 'Zero' : inWords(Math.round(num));
+    }
+
+    const totalText = document.querySelector('.net').textContent.replace(/[^\d.]/g, '');
+    const total = parseFloat(totalText) || 0;
+    document.getElementById('amountInWords').textContent =
+        'Rupees ' + numberToWords(total) + ' Only';
+</script>
 
 </body>
 </html>
