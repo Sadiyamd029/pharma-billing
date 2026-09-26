@@ -13,7 +13,7 @@
         }
 
         #invoice {
-            max-width: 1050px;
+            max-width: 1100px;
             margin: 0 auto;
             border: 1px solid #000;
             background: #fff;
@@ -57,56 +57,56 @@
         table.items th, table.items td {
             padding: 4px 5px;
             text-align: center;
-            border-bottom: 1px solid #ccc;
+            border: 1px solid #ccc;
             font-size: 10px;
         }
 
         table.items th {
             background-color: #f2f2f2;
-            border-top: 1px solid #000;
-            border-bottom: 1px solid #000;
+            border: 1px solid #000;
         }
 
-        table.items td:nth-child(3) { text-align: left; }
+        table.items td:nth-child(4) { text-align: left; }
 
-       .summary-wrap {
-       display: flex;
-       border-top: 1px solid #000;
-       }
+        .summary-wrap {
+            display: flex;
+            border-top: 1px solid #000;
+        }
 
-       table.tax-table, table.totals-table {
-       border-collapse: collapse;
-       }
+        table.tax-table, table.totals-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
 
-       table.tax-table {
-       flex: 1.4;
-       border-right: 1px solid #000;
-       }
+        table.tax-table {
+            flex: 1.4;
+            border-right: 1px solid #000;
+        }
 
-       table.tax-table th, table.tax-table td {
-       border: 1px solid #000;
-       padding: 4px 8px;
-       font-size: 12px;
-       text-align: center;
-       }
+        table.tax-table th, table.tax-table td {
+            border: 1px solid #000;
+            padding: 4px 8px;
+            font-size: 12px;
+            text-align: center;
+        }
 
-       table.totals-table {
-       flex: 1;
-       }
+        table.totals-table {
+            flex: 1;
+        }
 
-       table.totals-table td {
-       border: 1px solid #000;
-       padding: 5px 10px;
-       font-size: 12px;
-       }
+        table.totals-table td {
+            border: 1px solid #000;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
 
-       table.totals-table td:first-child { text-align: left; }
-       table.totals-table td:last-child { text-align: right; font-weight: 500; }
+        table.totals-table td:first-child { text-align: left; }
+        table.totals-table td:last-child { text-align: right; font-weight: 500; }
 
-       table.totals-table tr.net td {
-       font-weight: bold;
-       font-size: 14px;
-       }
+        table.totals-table tr.net td {
+            font-weight: bold;
+            font-size: 14px;
+        }
 
         .inv-words {
             padding: 6px 12px;
@@ -176,105 +176,94 @@
     </div>
 
     <table class="items">
-    <tr>
-        <th rowspan="2">SL</th>
-        <th rowspan="2">MFR</th>
-        <th rowspan="2">HSN Code</th>
-        <th rowspan="2">Product Name</th>
-        <th rowspan="2">Pack</th>
-        <th rowspan="2">Batch</th>
-        <th rowspan="2">Ex.Dt</th>
-        <th rowspan="2">M.R.P</th>
-        <th rowspan="2">Qty</th>
-        <th rowspan="2">Free</th>
-        <th rowspan="2">Rate</th>
-        <th rowspan="2">Amount</th>
-        <th rowspan="2">Disc</th>
-        <th rowspan="2">Taxable Amt</th>
-        <th colspan="2">CGST</th>
-        <th colspan="2">SGST</th>
-        <th rowspan="2">Total</th>
-    </tr>
-    <tr>
-        <th>%</th>
-        <th>Tax Amt</th>
-        <th>%</th>
-        <th>Tax Amt</th>
-    </tr>
-
-    {% for i in items %}
-    <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ i.mfr }}</td>
-        <td>{{ i.hsn }}</td>
-        <td>{{ i.name }}</td>
-        <td>{{ i.pack }}</td>
-        <td>{{ i.batch }}</td>
-        <td>{{ i.expiry }}</td>
-        <td>{{ i.mrp }}</td>
-        <td>{{ i.qty }}</td>
-        <td>{{ i.free }}</td>
-        <td>{{ i.rate }}</td>
-        <td>{{ i.gross }}</td>
-        <td>{{ i.disc_amt }}</td>
-        <td>{{ i.taxable }}</td>
-        <td>{{ i.cgst_rate }}</td>
-        <td>{{ i.cgst_amt }}</td>
-        <td>{{ i.sgst_rate }}</td>
-        <td>{{ i.sgst_amt }}</td>
-        <td>{{ i.amount }}</td>
-    </tr>
-    {% endfor %}
-</table>
-
-    <div class="summary-wrap">
-    <table class="tax-table">
         <tr>
-            <th>Tax Rate</th>
-            <th>Taxable Amt</th>
-            <th>CGST Amt</th>
-            <th>SGST Amt</th>
-            <th>Adj</th>
-            <th>Rounded</th>
+            <th rowspan="2">SL</th>
+            <th rowspan="2">MFR</th>
+            <th rowspan="2">HSN Code</th>
+            <th rowspan="2">Product Name</th>
+            <th rowspan="2">Pack</th>
+            <th rowspan="2">Batch</th>
+            <th rowspan="2">Ex.Dt</th>
+            <th rowspan="2">M.R.P</th>
+            <th rowspan="2">Qty</th>
+            <th rowspan="2">Free</th>
+            <th rowspan="2">Rate</th>
+            <th rowspan="2">Amount</th>
+            <th rowspan="2">Disc</th>
+            <th rowspan="2">Taxable Amt</th>
+            <th colspan="2">CGST</th>
+            <th colspan="2">SGST</th>
+            <th rowspan="2">Total</th>
         </tr>
-        {% for t in tax_summary %}
         <tr>
-            <td>{{ t.rate }}%</td>
-            <td>{{ "%.2f"|format(t.taxable) }}</td>
-            <td>{{ "%.2f"|format(t.cgst) }}</td>
-            <td>{{ "%.2f"|format(t.sgst) }}</td>
-            <td></td>
-            <td></td>
+            <th>%</th>
+            <th>Tax Amt</th>
+            <th>%</th>
+            <th>Tax Amt</th>
+        </tr>
+
+        {% for i in items %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ i.mfr }}</td>
+            <td>{{ i.hsn }}</td>
+            <td>{{ i.name }}</td>
+            <td>{{ i.pack }}</td>
+            <td>{{ i.batch }}</td>
+            <td>{{ i.expiry }}</td>
+            <td>{{ i.mrp }}</td>
+            <td>{{ i.qty }}</td>
+            <td>{{ i.free }}</td>
+            <td>{{ i.rate }}</td>
+            <td>{{ i.gross }}</td>
+            <td>{{ i.disc_amt }}</td>
+            <td>{{ i.taxable }}</td>
+            <td>{{ i.cgst_rate }}</td>
+            <td>{{ i.cgst_amt }}</td>
+            <td>{{ i.sgst_rate }}</td>
+            <td>{{ i.sgst_amt }}</td>
+            <td>{{ i.amount }}</td>
         </tr>
         {% endfor %}
-        <tr>
-            <td colspan="4" style="text-align:left;">
-                No. of Items: {{ total_items }} &nbsp;&nbsp; No. of Units: {{ total_units }}
-            </td>
-            <td>{{ "%.2f"|format(adj) }}</td>
-            <td>{{ "%.2f"|format(rounding) }}</td>
-        </tr>
     </table>
 
-    <table class="totals-table">
-        <tr><td>Gross Amount</td><td>₹{{ total_gross }}</td></tr>
-        <tr><td>Total Discount</td><td>₹{{ total_disc }}</td></tr>
-        <tr><td>Total Taxable Amount</td><td>₹{{ total_taxable }}</td></tr>
-        <tr><td>Total CGST</td><td>₹{{ total_cgst }}</td></tr>
-        <tr><td>Total SGST</td><td>₹{{ total_sgst }}</td></tr>
-        <tr class="net"><td>NET AMOUNT</td><td>₹{{ total }}</td></tr>
-    </table>
-</div>
-        <div class="right">
-            <div><span>Gross Amount</span><span>₹{{ total_gross }}</span></div>
-            <div><span>Total Discount</span><span>₹{{ total_disc }}</span></div>
-            <div><span>Total Taxable Amount</span><span>₹{{ total_taxable }}</span></div>
-            <div><span>Total CGST</span><span>₹{{ total_cgst }}</span></div>
-            <div><span>Total SGST</span><span>₹{{ total_sgst }}</span></div>
-            <div><span>Adj</span><span>₹{{ "%.2f"|format(adj) }}</span></div>
-            <div><span>Rounded</span><span>₹{{ "%.2f"|format(rounding) }}</span></div>
-            <div class="net"><span>NET AMOUNT</span><span>₹{{ total }}</span></div>
-        </div>
+    <div class="summary-wrap">
+        <table class="tax-table">
+            <tr>
+                <th>Tax Rate</th>
+                <th>Taxable Amt</th>
+                <th>CGST Amt</th>
+                <th>SGST Amt</th>
+                <th>Adj</th>
+                <th>Rounded</th>
+            </tr>
+            {% for t in tax_summary %}
+            <tr>
+                <td>{{ t.rate }}%</td>
+                <td>{{ "%.2f"|format(t.taxable) }}</td>
+                <td>{{ "%.2f"|format(t.cgst) }}</td>
+                <td>{{ "%.2f"|format(t.sgst) }}</td>
+                <td></td>
+                <td></td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="4" style="text-align:left;">
+                    No. of Items: {{ total_items }} &nbsp;&nbsp; No. of Units: {{ total_units }}
+                </td>
+                <td>{{ "%.2f"|format(adj) }}</td>
+                <td>{{ "%.2f"|format(rounding) }}</td>
+            </tr>
+        </table>
+
+        <table class="totals-table">
+            <tr><td>Gross Amount</td><td>₹{{ total_gross }}</td></tr>
+            <tr><td>Total Discount</td><td>₹{{ total_disc }}</td></tr>
+            <tr><td>Total Taxable Amount</td><td>₹{{ total_taxable }}</td></tr>
+            <tr><td>Total CGST</td><td>₹{{ total_cgst }}</td></tr>
+            <tr><td>Total SGST</td><td>₹{{ total_sgst }}</td></tr>
+            <tr class="net"><td>NET AMOUNT</td><td>₹{{ total }}</td></tr>
+        </table>
     </div>
 
     <div class="inv-words">
@@ -321,8 +310,9 @@ function numberToWords(num) {
     return num === 0 ? 'Zero' : inWords(Math.round(num));
 }
 
-const netText = document.querySelector('.summary .net span:last-child').textContent.replace(/[^\d.]/g, '');
-const netVal = parseFloat(netText) || 0;
+// Total comes straight from the template, not scraped from the page —
+// avoids breaking if the layout around it ever changes again.
+const netVal = {{ total }};
 document.getElementById('amountInWords').textContent = 'Rupees ' + numberToWords(netVal) + ' Only';
 </script>
 
