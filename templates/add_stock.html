@@ -5,10 +5,17 @@
 <h2>Add Stock</h2>
 
 <form method="POST">
-<input name="name" placeholder="Medicine"><br><br>
-<input name="batch" placeholder="Batch"><br><br>
+<input name="name" placeholder="Medicine Name" required><br><br>
+<input name="mfr" placeholder="MFR Code"><br><br>
+<input name="hsn" placeholder="HSN Code"><br><br>
+<input name="pack" placeholder="Pack / Size (e.g. 10x10, 100ml)"><br><br>
+<input name="batch" placeholder="Batch No" required><br><br>
 <input type="date" name="expiry"><br><br>
-<input name="stock" placeholder="Stock"><br><br>
+<input name="purchase_price" type="number" step="any" placeholder="Purchase Price"><br><br>
+<input name="rate" type="number" step="any" placeholder="Selling Price (Rate)"><br><br>
+<input name="mrp" type="number" step="any" placeholder="MRP"><br><br>
+<input name="gst" type="number" step="any" placeholder="GST %"><br><br>
+<input name="stock" type="number" placeholder="Stock Qty" required><br><br>
 
 <button>Add Stock</button>
 </form>
@@ -19,14 +26,22 @@
 
 <table>
 <tr>
-<th>Name</th><th>Batch</th><th>Expiry</th><th>Stock</th><th>Actions</th>
+<th>Name</th><th>MFR</th><th>HSN</th><th>Pack</th><th>Batch</th><th>Expiry</th>
+<th>PP</th><th>Rate</th><th>MRP</th><th>GST%</th><th>Stock</th><th>Actions</th>
 </tr>
 
 {% for m in medicines %}
-<tr style="{{ 'color:#f87171;' if m['stock']|int < 5 else '' }}">
+<tr>
 <td>{{ m['name'] }}</td>
+<td>{{ m['mfr'] or '' }}</td>
+<td>{{ m['hsn'] or '' }}</td>
+<td>{{ m['pack'] or '' }}</td>
 <td>{{ m['batch'] }}</td>
 <td>{{ m['expiry'] }}</td>
+<td>{{ m['purchase_price'] or '' }}</td>
+<td>{{ m['rate'] or '' }}</td>
+<td>{{ m['mrp'] or '' }}</td>
+<td>{{ m['gst'] or '' }}</td>
 <td>{{ m['stock'] }}</td>
 <td>
     <a href="/edit/{{ m['name'] }}/{{ m['batch'] }}"><button>Edit</button></a>

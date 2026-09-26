@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-from db import get_all_medicines, get_alerts, init_db, get_db
+from db import get_all_medicines, get_alerts, init_db, get_db, add_medicine, reduce_stock
 import os
 
 app = Flask(__name__)
@@ -7,11 +7,8 @@ app.secret_key = "sa0206"
 
 init_db()
 
-# Real credentials — set these on Render (Environment tab), don't leave the defaults in production
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "1234")
-
-# ... (chart_data, home, billing, invoice routes stay exactly as they are) ...
 
 
 # CHART DATA
@@ -22,10 +19,21 @@ def chart_data():
     stock = [m["stock"] for m in medicines]
     return jsonify({"labels": labels, "stock": stock})
 
+
+# MEDICINE LOOKUP for billing autofill
+@app.route("/api/medicines")
+def api_medicines():
+    if 'user' not in session:
+        return jsonify([])
+    medicines = get_all_medicines()
+    return jsonify([dict(m) for m in medicines])
+
+
 # HOME
 @app.route('/')
 def home():
     return redirect('/login')
+
 
 # BILLING
 @app.route('/billing')
@@ -34,27 +42,103 @@ def billing():
         return redirect('/login')
     return render_template('index.html')
 
+
 # INVOICE
 @app.route('/invoice', methods=['POST'])
 def invoice():
+    names   = request.form.getlist('name')
+    mfrs    = request.form.getlist('mfr')
+    hsns    = request.form.getlist('hsn')
+    packs   = request.form.getlist('pack')
+    batches = request.form.getlist('batch')
+    expiry  = request.form.getlist('expiry')
+    mrps    = request.form.getlist('mrp')
+    qtys    = request.form.getlist('qty')
+    frees   = request.form.getlist('free')
+    rates   = request.form.getlist('rate')
+    discs   = request.form.getlist('disc')
+    gsts    = request.form.getlist('gst')
+
+    party = request.form.get('party', '')
+
     items = []
-    names = request.form.getlist('name')
-    batch = request.form.getlist('batch')
-    qty = request.form.getlist('qty')
-    rate = request.form.getlist('rate')
-    total = 0
+    total_taxable = 0
+    total_cgst = 0
+    total_sgst = 0
+    net_amount = 0
 
     for i in range(len(names)):
+        if not names[i]:
+            continue
         try:
-            q = float(qty[i])
-            r = float(rate[i])
-            item_total = q * r
-            total += item_total
-            items.append({"name": names[i], "batch": batch[i], "qty": q, "amount": item_total})
-        except:
+            qty  = float(qtys[i]) if qtys[i] else 0
+            rate = float(rates[i]) if rates[i] else 0
+            free = float(frees[i]) if frees[i] else 0
+            disc = float(discs[i]) if discs[i] else 0
+            gst  = float(gsts[i]) if gsts[i] else 0
+            mrp  = float(mrps[i]) if mrps[i] else 0
+        except ValueError:
             continue
 
-    return render_template('invoice.html', items=items, total=total)
+        gross = qty * rate
+        disc_amt = gross * disc / 100
+        taxable = gross - disc_amt
+
+        cgst_rate = gst / 2
+        sgst_rate = gst / 2
+        cgst_amt = taxable * cgst_rate / 100
+        sgst_amt = taxable * sgst_rate / 100
+
+        line_total = taxable + cgst_amt + sgst_amt
+
+        total_taxable += taxable
+        total_cgst += cgst_amt
+        total_sgst += sgst_amt
+        net_amount += line_total
+
+        items.append({
+            "name": names[i],
+            "mfr": mfrs[i] if i < len(mfrs) else "",
+            "hsn": hsns[i] if i < len(hsns) else "",
+            "pack": packs[i] if i < len(packs) else "",
+            "batch": batches[i],
+            "expiry": expiry[i] if i < len(expiry) else "",
+            "mrp": round(mrp, 2),
+            "qty": qty,
+            "free": free,
+            "rate": rate,
+            "disc": disc,
+            "taxable": round(taxable, 2),
+            "gst_rate": gst,
+            "cgst_rate": cgst_rate,
+            "cgst_amt": round(cgst_amt, 2),
+            "sgst_rate": sgst_rate,
+            "sgst_amt": round(sgst_amt, 2),
+            "amount": round(line_total, 2),
+        })
+
+        # deduct sold + free units from stock
+        reduce_stock(names[i], batches[i], qty + free)
+
+    tax_summary = {}
+    for it in items:
+        r = it["gst_rate"]
+        if r not in tax_summary:
+            tax_summary[r] = {"rate": r, "taxable": 0, "cgst": 0, "sgst": 0}
+        tax_summary[r]["taxable"] += it["taxable"]
+        tax_summary[r]["cgst"] += it["cgst_amt"]
+        tax_summary[r]["sgst"] += it["sgst_amt"]
+
+    return render_template(
+        'invoice.html',
+        items=items,
+        party=party,
+        total_taxable=round(total_taxable, 2),
+        total_cgst=round(total_cgst, 2),
+        total_sgst=round(total_sgst, 2),
+        total=round(net_amount, 2),
+        tax_summary=list(tax_summary.values()),
+    )
 
 
 # LOGIN
@@ -79,6 +163,7 @@ def logout():
     session.clear()
     return redirect('/login')
 
+
 # DASHBOARD
 @app.route('/dashboard')
 def dashboard():
@@ -97,29 +182,37 @@ def dashboard():
         expiry_soon=0
     )
 
+
 # STOCK PAGE
 @app.route('/add_stock', methods=["GET", "POST"])
 def add_stock():
-    from db import add_medicine
-
     if 'user' not in session:
         return redirect('/login')
 
     if request.method == "POST":
-        stock = request.form.get("stock")
-        stock = int(stock) if stock else 0
+        def f(key):
+            v = request.form.get(key)
+            return float(v) if v else 0
 
         add_medicine(
             request.form.get("name"),
+            request.form.get("mfr"),
+            request.form.get("hsn"),
+            request.form.get("pack"),
             request.form.get("batch"),
             request.form.get("expiry"),
-            stock
+            f("purchase_price"),
+            f("rate"),
+            f("mrp"),
+            f("gst"),
+            int(f("stock")),
         )
 
     medicines = get_all_medicines()
     return render_template('add_stock.html', medicines=medicines)
 
-# EDIT
+
+# EDIT (stock quantity only, same as before)
 @app.route("/edit/<name>/<batch>", methods=["GET", "POST"])
 def edit(name, batch):
     if request.method == "POST":
@@ -139,6 +232,7 @@ def edit(name, batch):
 
     return render_template("edit.html", name=name, batch=batch)
 
+
 # DELETE
 @app.route("/delete/<name>/<batch>")
 def delete(name, batch):
@@ -153,6 +247,7 @@ def delete(name, batch):
 
     return redirect("/add_stock")
 
+
 # ALERTS
 @app.route('/alerts')
 def alerts():
@@ -161,6 +256,7 @@ def alerts():
 
     low_stock, expiry_soon = get_alerts()
     return render_template('alerts.html', low_stock=low_stock, expiry_soon=expiry_soon)
+
 
 if __name__ == "__main__":
     app.run(debug=True)

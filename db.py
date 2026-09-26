@@ -7,7 +7,6 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL environment variable is not set")
 
-# Render sometimes hands out "postgres://" which newer psycopg2 rejects
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
@@ -30,18 +29,33 @@ def init_db():
     )
     """)
 
+    # Safe migration: adds the new columns to your existing table without
+    # touching any data already in it. Old rows will just have blank/NULL
+    # values for these until you edit or re-add them.
+    for col, coltype in [
+        ("mfr", "TEXT"),
+        ("hsn", "TEXT"),
+        ("pack", "TEXT"),
+        ("purchase_price", "REAL"),
+        ("rate", "REAL"),
+        ("mrp", "REAL"),
+        ("gst", "REAL"),
+    ]:
+        cur.execute(f"ALTER TABLE medicines ADD COLUMN IF NOT EXISTS {col} {coltype}")
+
     conn.commit()
     conn.close()
 
 
-def add_medicine(name, batch, expiry, stock):
+def add_medicine(name, mfr, hsn, pack, batch, expiry, purchase_price, rate, mrp, gst, stock):
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute(
-        "INSERT INTO medicines (name, batch, expiry, stock) VALUES (%s, %s, %s, %s)",
-        (name, batch, expiry, stock)
-    )
+    cur.execute("""
+        INSERT INTO medicines
+        (name, mfr, hsn, pack, batch, expiry, purchase_price, rate, mrp, gst, stock)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    """, (name, mfr, hsn, pack, batch, expiry, purchase_price, rate, mrp, gst, stock))
 
     conn.commit()
     conn.close()
@@ -55,7 +69,7 @@ def get_all_medicines():
     data = cur.fetchall()
 
     conn.close()
-    return data  # each row supports m["name"], m["batch"], etc — same as before
+    return data
 
 
 def reduce_stock(name, batch, qty):
@@ -64,7 +78,7 @@ def reduce_stock(name, batch, qty):
 
     cur.execute("""
         UPDATE medicines
-        SET stock = stock - %s
+        SET stock = GREATEST(stock - %s, 0)
         WHERE name = %s AND batch = %s
     """, (qty, name, batch))
 

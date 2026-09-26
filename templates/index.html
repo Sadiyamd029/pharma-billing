@@ -32,6 +32,8 @@ td input {
 <div class="card">
 <h2>Billing</h2>
 
+<datalist id="medList"></datalist>
+
 <form action="/invoice" method="POST">
 <input name="party" placeholder="Party Name"><br><br>
 
@@ -52,12 +54,12 @@ td input {
 </tr>
 
 <tr>
-<td><input name="name"></td>
+<td><input name="name" list="medList"></td>
 <td><input name="mfr"></td>
 <td><input name="hsn"></td>
 <td><input name="pack"></td>
 <td><input name="batch"></td>
-<td><input name="expiry" type="month"></td>
+<td><input name="expiry"></td>
 <td><input name="mrp"></td>
 <td><input name="qty"></td>
 <td><input name="free" placeholder="0"></td>
@@ -104,15 +106,57 @@ td input {
 </div>
 
 <script>
+let medicineData = [];
+
+function labelFor(m){
+    return `${m.name} — ${m.batch} — Exp ${m.expiry || 'NA'} — Stock ${m.stock}`;
+}
+
+async function loadMedicines(){
+    try{
+        let res = await fetch('/api/medicines');
+        medicineData = await res.json();
+        let dl = document.getElementById('medList');
+        dl.innerHTML = '';
+        medicineData.forEach(m => {
+            let opt = document.createElement('option');
+            opt.value = labelFor(m);
+            dl.appendChild(opt);
+        });
+    }catch(e){ console.log('medicine list error', e); }
+}
+
+function autofillRow(row, typedValue){
+    let match = medicineData.find(m => labelFor(m) === typedValue);
+    if(!match) return;
+
+    row.querySelector('[name="name"]').value = match.name;
+    row.querySelector('[name="mfr"]').value = match.mfr || '';
+    row.querySelector('[name="hsn"]').value = match.hsn || '';
+    row.querySelector('[name="pack"]').value = match.pack || '';
+    row.querySelector('[name="batch"]').value = match.batch || '';
+    row.querySelector('[name="expiry"]').value = match.expiry || '';
+    row.querySelector('[name="mrp"]').value = match.mrp || '';
+    row.querySelector('[name="rate"]').value = match.rate || '';
+    row.querySelector('[name="gst"]').value = match.gst || '';
+    // qty, free, disc are left as-is for manual entry
+}
+
+document.getElementById('billTable').addEventListener('input', function(e){
+    if(e.target.name === 'name'){
+        autofillRow(e.target.closest('tr'), e.target.value);
+    }
+});
+
 function addRow(){
     let row = document.getElementById("billTable").insertRow();
     row.innerHTML = `
-    <td><input name="name"></td>
+    <td><input name="name" list="medList"></td>
     <td><input name="mfr"></td>
     <td><input name="hsn"></td>
     <td><input name="pack"></td>
     <td><input name="batch"></td>
-    <td><input name="expiry" type="month"></td>
+    <td><input name="expiry"></td>
     <td><input name="mrp"></td>
     <td><input name="qty"></td>
     <td><input name="free" placeholder="0"></td>
@@ -120,6 +164,8 @@ function addRow(){
     <td><input name="disc" placeholder="0"></td>
     <td><input name="gst" placeholder="0"></td>`;
 }
+
+loadMedicines();
 </script>
 
 {% endblock %}
