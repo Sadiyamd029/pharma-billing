@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-from db import get_all_medicines, get_alerts, init_db, get_db, add_medicine, reduce_stock
+from db import get_all_medicines, get_alerts, init_db, get_db, add_medicine, reduce_stock, create_bill
+from datetime import datetime
 import os
 
 app = Flask(__name__)
@@ -11,7 +12,6 @@ ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "1234")
 
 
-# CHART DATA
 @app.route("/chart_data")
 def chart_data():
     medicines = get_all_medicines()
@@ -20,7 +20,6 @@ def chart_data():
     return jsonify({"labels": labels, "stock": stock})
 
 
-# MEDICINE LOOKUP for billing autofill
 @app.route("/api/medicines")
 def api_medicines():
     if 'user' not in session:
@@ -29,13 +28,11 @@ def api_medicines():
     return jsonify([dict(m) for m in medicines])
 
 
-# HOME
 @app.route('/')
 def home():
     return redirect('/login')
 
 
-# BILLING
 @app.route('/billing')
 def billing():
     if 'user' not in session:
@@ -43,7 +40,6 @@ def billing():
     return render_template('index.html')
 
 
-# INVOICE
 @app.route('/invoice', methods=['POST'])
 def invoice():
     names   = request.form.getlist('name')
@@ -59,13 +55,20 @@ def invoice():
     discs   = request.form.getlist('disc')
     gsts    = request.form.getlist('gst')
 
-    party = request.form.get('party', '')
+    party         = request.form.get('party', '')
+    party_address = request.form.get('party_address', '')
+    party_gstin   = request.form.get('party_gstin', '')
+    party_phone   = request.form.get('party_phone', '')
+    party_state   = request.form.get('party_state', '')
+    mode          = request.form.get('mode', 'Cash')
 
     items = []
+    total_qty = 0
+    total_gross = 0
+    total_disc = 0
     total_taxable = 0
     total_cgst = 0
     total_sgst = 0
-    net_amount = 0
 
     for i in range(len(names)):
         if not names[i]:
@@ -91,10 +94,12 @@ def invoice():
 
         line_total = taxable + cgst_amt + sgst_amt
 
+        total_qty += qty
+        total_gross += gross
+        total_disc += disc_amt
         total_taxable += taxable
         total_cgst += cgst_amt
         total_sgst += sgst_amt
-        net_amount += line_total
 
         items.append({
             "name": names[i],
@@ -107,7 +112,8 @@ def invoice():
             "qty": qty,
             "free": free,
             "rate": rate,
-            "disc": disc,
+            "gross": round(gross, 2),
+            "disc_amt": round(disc_amt, 2),
             "taxable": round(taxable, 2),
             "gst_rate": gst,
             "cgst_rate": cgst_rate,
@@ -117,7 +123,6 @@ def invoice():
             "amount": round(line_total, 2),
         })
 
-        # deduct sold + free units from stock
         reduce_stock(names[i], batches[i], qty + free)
 
     tax_summary = {}
@@ -129,19 +134,38 @@ def invoice():
         tax_summary[r]["cgst"] += it["cgst_amt"]
         tax_summary[r]["sgst"] += it["sgst_amt"]
 
+    net_raw = total_taxable + total_cgst + total_sgst
+    rounded_net = round(net_raw)
+    rounding_adj = round(rounded_net - net_raw, 2)
+
+    bill_no = create_bill()
+    bill_date = datetime.now().strftime('%d/%b/%Y')
+
     return render_template(
         'invoice.html',
         items=items,
         party=party,
+        party_address=party_address,
+        party_gstin=party_gstin,
+        party_phone=party_phone,
+        party_state=party_state,
+        mode=mode,
+        bill_no=bill_no,
+        bill_date=bill_date,
+        total_items=len(items),
+        total_units=total_qty,
+        total_gross=round(total_gross, 2),
+        total_disc=round(total_disc, 2),
         total_taxable=round(total_taxable, 2),
         total_cgst=round(total_cgst, 2),
         total_sgst=round(total_sgst, 2),
-        total=round(net_amount, 2),
+        adj=0.00,
+        rounding=rounding_adj,
+        total=rounded_net,
         tax_summary=list(tax_summary.values()),
     )
 
 
-# LOGIN
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -157,14 +181,12 @@ def login():
     return render_template('login.html')
 
 
-# LOGOUT
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/login')
 
 
-# DASHBOARD
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
@@ -183,7 +205,6 @@ def dashboard():
     )
 
 
-# STOCK PAGE
 @app.route('/add_stock', methods=["GET", "POST"])
 def add_stock():
     if 'user' not in session:
@@ -212,7 +233,6 @@ def add_stock():
     return render_template('add_stock.html', medicines=medicines)
 
 
-# EDIT (stock quantity only, same as before)
 @app.route("/edit/<name>/<batch>", methods=["GET", "POST"])
 def edit(name, batch):
     if request.method == "POST":
@@ -233,7 +253,6 @@ def edit(name, batch):
     return render_template("edit.html", name=name, batch=batch)
 
 
-# DELETE
 @app.route("/delete/<name>/<batch>")
 def delete(name, batch):
     conn = get_db()
@@ -248,7 +267,6 @@ def delete(name, batch):
     return redirect("/add_stock")
 
 
-# ALERTS
 @app.route('/alerts')
 def alerts():
     if 'user' not in session:

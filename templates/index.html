@@ -36,7 +36,17 @@ td input {
 
 <form action="/invoice" method="POST">
 <input name="party" placeholder="Party Name"><br><br>
-
+<input name="party" placeholder="Party Name"><br><br>
+<input name="party_address" placeholder="Party Address"><br><br>
+<div style="display:flex; gap:10px;">
+    <input name="party_gstin" placeholder="Party GSTIN">
+    <input name="party_phone" placeholder="Party Phone">
+    <input name="party_state" placeholder="State">
+</div><br>
+<select name="mode" style="width:150px; margin-bottom:15px;">
+    <option value="Cash">Cash</option>
+    <option value="Credit">Credit</option>
+</select><br><br>
 <table id="billTable">
 <tr>
 <th>Medicine</th>

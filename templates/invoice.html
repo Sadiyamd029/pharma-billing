@@ -13,7 +13,7 @@
         }
 
         #invoice {
-            max-width: 950px;
+            max-width: 1050px;
             margin: 0 auto;
             border: 1px solid #000;
             background: #fff;
@@ -31,39 +31,43 @@
         .inv-header {
             display: flex;
             border-bottom: 1px solid #000;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         .inv-header .col {
-            flex: 1;
             padding: 8px 12px;
             line-height: 1.5;
         }
 
-        .inv-header .col:first-child { border-right: 1px solid #000; }
+        .inv-header .col1 { flex: 1.3; border-right: 1px solid #000; }
+        .inv-header .col2 { flex: 1.3; border-right: 1px solid #000; }
+        .inv-header .col3 { flex: 1; }
 
         .inv-header .shop-name { font-weight: bold; font-size: 15px; margin-bottom: 3px; }
         .inv-header .to-label { font-weight: bold; font-size: 11px; }
 
-        table {
+        .inv-header .col3 div { display: flex; justify-content: space-between; margin-bottom: 2px; }
+        .inv-header .col3 .k { color: #333; }
+
+        table.items {
             width: 100%;
             border-collapse: collapse;
         }
 
-        th, td {
-            padding: 5px 6px;
+        table.items th, table.items td {
+            padding: 4px 5px;
             text-align: center;
             border-bottom: 1px solid #ccc;
-            font-size: 11px;
+            font-size: 10px;
         }
 
-        th {
+        table.items th {
             background-color: #f2f2f2;
             border-top: 1px solid #000;
             border-bottom: 1px solid #000;
         }
 
-        td:nth-child(1) { text-align: left; }
+        table.items td:nth-child(3) { text-align: left; }
 
         .summary {
             display: flex;
@@ -72,7 +76,7 @@
         }
 
         .summary .left {
-            flex: 1.3;
+            flex: 1.4;
             padding: 8px 12px;
             border-right: 1px solid #000;
         }
@@ -107,6 +111,14 @@
             font-size: 12px;
         }
 
+        .inv-legal {
+            padding: 6px 12px;
+            border-top: 1px solid #000;
+            font-size: 10px;
+            color: #333;
+            line-height: 1.4;
+        }
+
         .inv-footer {
             display: flex;
             justify-content: space-between;
@@ -139,24 +151,33 @@
     <div class="inv-title">GST INVOICE</div>
 
     <div class="inv-header">
-        <div class="col">
+        <div class="col col1">
             <div class="shop-name">Aushadhi Enterprises</div>
             D.NO: 6D-10-15, Kathepu Veedhi Road, Eluru<br>
             PAN: ABIFA1323R &nbsp; Tel: 9701616165<br>
             GSTIN: 37ABIFA1323R1Z6
         </div>
-        <div class="col">
+        <div class="col col2">
             <div class="to-label">TO :</div>
-            {% if party %}{{ party }}{% else %}&nbsp;{% endif %}
+            {% if party %}{{ party }}{% endif %}
+            {% if party_address %}<br>{{ party_address }}{% endif %}
+            {% if party_gstin %}<br>GSTIN: {{ party_gstin }}{% endif %}
+            {% if party_phone %}<br>Ph: {{ party_phone }}{% endif %}
+        </div>
+        <div class="col col3">
+            <div><span class="k">Mode</span><span>{{ mode }}</span></div>
+            <div><span class="k">Bill No.</span><span>{{ bill_no }}</span></div>
+            <div><span class="k">Date</span><span>{{ bill_date }}</span></div>
+            <div><span class="k">State</span><span>{{ party_state }}</span></div>
         </div>
     </div>
 
-    <table>
+    <table class="items">
         <tr>
             <th>SL</th>
             <th>MFR</th>
-            <th>HSN</th>
             <th>Product Name</th>
+            <th>HSN</th>
             <th>Pack</th>
             <th>Batch</th>
             <th>Ex.Dt</th>
@@ -164,10 +185,13 @@
             <th>Qty</th>
             <th>Free</th>
             <th>Rate</th>
-            <th>Disc%</th>
+            <th>Amount</th>
+            <th>Disc</th>
             <th>Taxable Amt</th>
             <th>CGST%</th>
+            <th>CGST Amt</th>
             <th>SGST%</th>
+            <th>SGST Amt</th>
             <th>Total</th>
         </tr>
 
@@ -175,8 +199,8 @@
         <tr>
             <td>{{ loop.index }}</td>
             <td>{{ i.mfr }}</td>
-            <td>{{ i.hsn }}</td>
             <td>{{ i.name }}</td>
+            <td>{{ i.hsn }}</td>
             <td>{{ i.pack }}</td>
             <td>{{ i.batch }}</td>
             <td>{{ i.expiry }}</td>
@@ -184,10 +208,13 @@
             <td>{{ i.qty }}</td>
             <td>{{ i.free }}</td>
             <td>{{ i.rate }}</td>
-            <td>{{ i.disc }}</td>
+            <td>{{ i.gross }}</td>
+            <td>{{ i.disc_amt }}</td>
             <td>{{ i.taxable }}</td>
             <td>{{ i.cgst_rate }}</td>
+            <td>{{ i.cgst_amt }}</td>
             <td>{{ i.sgst_rate }}</td>
+            <td>{{ i.sgst_amt }}</td>
             <td>{{ i.amount }}</td>
         </tr>
         {% endfor %}
@@ -206,12 +233,18 @@
                 </tr>
                 {% endfor %}
             </table>
+            <div style="margin-top:8px; font-size:11px;">
+                No. of Items: {{ total_items }} &nbsp;&nbsp; No. of Units: {{ total_units }}
+            </div>
         </div>
         <div class="right">
-            <div><span>No. of Items</span><span>{{ items|length }}</span></div>
+            <div><span>Gross Amount</span><span>₹{{ total_gross }}</span></div>
+            <div><span>Total Discount</span><span>₹{{ total_disc }}</span></div>
             <div><span>Total Taxable Amount</span><span>₹{{ total_taxable }}</span></div>
             <div><span>Total CGST</span><span>₹{{ total_cgst }}</span></div>
             <div><span>Total SGST</span><span>₹{{ total_sgst }}</span></div>
+            <div><span>Adj</span><span>₹{{ "%.2f"|format(adj) }}</span></div>
+            <div><span>Rounded</span><span>₹{{ "%.2f"|format(rounding) }}</span></div>
             <div class="net"><span>NET AMOUNT</span><span>₹{{ total }}</span></div>
         </div>
     </div>
@@ -220,9 +253,16 @@
         In Words: <span id="amountInWords">—</span>
     </div>
 
+    <div class="inv-legal">
+        E.&amp;O.E. — This registration certificate is valid on the date of this invoice. Net amount is rounded off.
+        We hereby give the warranty that the above goods sold by us do not contravene in any way the provisions of
+        Section 18 of the Drugs &amp; Cosmetics Act, 1940.
+    </div>
+
     <div class="inv-footer">
-        <div>E.&amp;O.E.</div>
+        <div></div>
         <div class="sign-box">
+            <div>For Aushadhi Enterprises</div>
             <div class="sign-line">Authorised Signatory</div>
         </div>
     </div>
