@@ -69,41 +69,44 @@
 
         table.items td:nth-child(3) { text-align: left; }
 
-        .summary {
-            display: flex;
-            border-top: 1px solid #000;
-            font-size: 12px;
-        }
+       .summary-wrap {
+       display: flex;
+       border-top: 1px solid #000;
+       }
 
-        .summary .left {
-            flex: 1.4;
-            padding: 8px 12px;
-            border-right: 1px solid #000;
-        }
+       table.tax-table, table.totals-table {
+       border-collapse: collapse;
+       }
 
-        .summary .left table th, .summary .left table td {
-            font-size: 11px;
-            padding: 3px 6px;
-        }
+       table.tax-table {
+       flex: 1.4;
+       border-right: 1px solid #000;
+       }
 
-        .summary .right {
-            flex: 1;
-            padding: 8px 12px;
-        }
+       table.tax-table th, table.tax-table td {
+       border: 1px solid #000;
+       padding: 4px 8px;
+       font-size: 12px;
+       text-align: center;
+       }
 
-        .summary .right div {
-            display: flex;
-            justify-content: space-between;
-            padding: 2px 0;
-        }
+       table.totals-table {
+       flex: 1;
+       }
 
-        .summary .right .net {
-            font-weight: bold;
-            border-top: 1px solid #000;
-            margin-top: 4px;
-            padding-top: 6px;
-            font-size: 14px;
-        }
+       table.totals-table td {
+       border: 1px solid #000;
+       padding: 5px 10px;
+       font-size: 12px;
+       }
+
+       table.totals-table td:first-child { text-align: left; }
+       table.totals-table td:last-child { text-align: right; font-weight: 500; }
+
+       table.totals-table tr.net td {
+       font-weight: bold;
+       font-size: 14px;
+       }
 
         .inv-words {
             padding: 6px 12px;
@@ -224,23 +227,44 @@
     {% endfor %}
 </table>
 
-    <div class="summary">
-        <div class="left">
-            <table>
-                <tr><th>Tax Rate</th><th>Taxable Amt</th><th>CGST Amt</th><th>SGST Amt</th></tr>
-                {% for t in tax_summary %}
-                <tr>
-                    <td>{{ t.rate }}%</td>
-                    <td>{{ "%.2f"|format(t.taxable) }}</td>
-                    <td>{{ "%.2f"|format(t.cgst) }}</td>
-                    <td>{{ "%.2f"|format(t.sgst) }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-            <div style="margin-top:8px; font-size:11px;">
+    <div class="summary-wrap">
+    <table class="tax-table">
+        <tr>
+            <th>Tax Rate</th>
+            <th>Taxable Amt</th>
+            <th>CGST Amt</th>
+            <th>SGST Amt</th>
+            <th>Adj</th>
+            <th>Rounded</th>
+        </tr>
+        {% for t in tax_summary %}
+        <tr>
+            <td>{{ t.rate }}%</td>
+            <td>{{ "%.2f"|format(t.taxable) }}</td>
+            <td>{{ "%.2f"|format(t.cgst) }}</td>
+            <td>{{ "%.2f"|format(t.sgst) }}</td>
+            <td></td>
+            <td></td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="4" style="text-align:left;">
                 No. of Items: {{ total_items }} &nbsp;&nbsp; No. of Units: {{ total_units }}
-            </div>
-        </div>
+            </td>
+            <td>{{ "%.2f"|format(adj) }}</td>
+            <td>{{ "%.2f"|format(rounding) }}</td>
+        </tr>
+    </table>
+
+    <table class="totals-table">
+        <tr><td>Gross Amount</td><td>₹{{ total_gross }}</td></tr>
+        <tr><td>Total Discount</td><td>₹{{ total_disc }}</td></tr>
+        <tr><td>Total Taxable Amount</td><td>₹{{ total_taxable }}</td></tr>
+        <tr><td>Total CGST</td><td>₹{{ total_cgst }}</td></tr>
+        <tr><td>Total SGST</td><td>₹{{ total_sgst }}</td></tr>
+        <tr class="net"><td>NET AMOUNT</td><td>₹{{ total }}</td></tr>
+    </table>
+</div>
         <div class="right">
             <div><span>Gross Amount</span><span>₹{{ total_gross }}</span></div>
             <div><span>Total Discount</span><span>₹{{ total_disc }}</span></div>
