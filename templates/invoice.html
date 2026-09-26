@@ -173,52 +173,56 @@
     </div>
 
     <table class="items">
-        <tr>
-            <th>SL</th>
-            <th>MFR</th>
-            <th>Product Name</th>
-            <th>HSN</th>
-            <th>Pack</th>
-            <th>Batch</th>
-            <th>Ex.Dt</th>
-            <th>MRP</th>
-            <th>Qty</th>
-            <th>Free</th>
-            <th>Rate</th>
-            <th>Amount</th>
-            <th>Disc</th>
-            <th>Taxable Amt</th>
-            <th>CGST%</th>
-            <th>CGST Amt</th>
-            <th>SGST%</th>
-            <th>SGST Amt</th>
-            <th>Total</th>
-        </tr>
+    <tr>
+        <th rowspan="2">SL</th>
+        <th rowspan="2">MFR</th>
+        <th rowspan="2">HSN Code</th>
+        <th rowspan="2">Product Name</th>
+        <th rowspan="2">Pack</th>
+        <th rowspan="2">Batch</th>
+        <th rowspan="2">Ex.Dt</th>
+        <th rowspan="2">M.R.P</th>
+        <th rowspan="2">Qty</th>
+        <th rowspan="2">Free</th>
+        <th rowspan="2">Rate</th>
+        <th rowspan="2">Amount</th>
+        <th rowspan="2">Disc</th>
+        <th rowspan="2">Taxable Amt</th>
+        <th colspan="2">CGST</th>
+        <th colspan="2">SGST</th>
+        <th rowspan="2">Total</th>
+    </tr>
+    <tr>
+        <th>%</th>
+        <th>Tax Amt</th>
+        <th>%</th>
+        <th>Tax Amt</th>
+    </tr>
 
-        {% for i in items %}
-        <tr>
-            <td>{{ loop.index }}</td>
-            <td>{{ i.mfr }}</td>
-            <td>{{ i.name }}</td>
-            <td>{{ i.hsn }}</td>
-            <td>{{ i.pack }}</td>
-            <td>{{ i.batch }}</td>
-            <td>{{ i.expiry }}</td>
-            <td>{{ i.mrp }}</td>
-            <td>{{ i.qty }}</td>
-            <td>{{ i.free }}</td>
-            <td>{{ i.rate }}</td>
-            <td>{{ i.gross }}</td>
-            <td>{{ i.disc_amt }}</td>
-            <td>{{ i.taxable }}</td>
-            <td>{{ i.cgst_rate }}</td>
-            <td>{{ i.cgst_amt }}</td>
-            <td>{{ i.sgst_rate }}</td>
-            <td>{{ i.sgst_amt }}</td>
-            <td>{{ i.amount }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+    {% for i in items %}
+    <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ i.mfr }}</td>
+        <td>{{ i.hsn }}</td>
+        <td>{{ i.name }}</td>
+        <td>{{ i.pack }}</td>
+        <td>{{ i.batch }}</td>
+        <td>{{ i.expiry }}</td>
+        <td>{{ i.mrp }}</td>
+        <td>{{ i.qty }}</td>
+        <td>{{ i.free }}</td>
+        <td>{{ i.rate }}</td>
+        <td>{{ i.gross }}</td>
+        <td>{{ i.disc_amt }}</td>
+        <td>{{ i.taxable }}</td>
+        <td>{{ i.cgst_rate }}</td>
+        <td>{{ i.cgst_amt }}</td>
+        <td>{{ i.sgst_rate }}</td>
+        <td>{{ i.sgst_amt }}</td>
+        <td>{{ i.amount }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
     <div class="summary">
         <div class="left">

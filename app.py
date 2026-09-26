@@ -2,6 +2,21 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from db import get_all_medicines, get_alerts, init_db, get_db, add_medicine, reduce_stock, create_bill
 from datetime import datetime
 import os
+from datetime import date, datetime
+
+def format_expiry(value):
+    """Always returns MM/YY regardless of whether the DB gives us a
+    date object, a full ISO string, or something already short."""
+    if not value:
+        return ""
+    if isinstance(value, (date, datetime)):
+        return value.strftime('%m/%y')
+    s = str(value)
+    try:
+        parsed = datetime.strptime(s[:10], '%Y-%m-%d')
+        return parsed.strftime('%m/%y')
+    except ValueError:
+        return s
 
 app = Flask(__name__)
 app.secret_key = "sa0206"
@@ -25,8 +40,12 @@ def api_medicines():
     if 'user' not in session:
         return jsonify([])
     medicines = get_all_medicines()
-    return jsonify([dict(m) for m in medicines])
-
+    result = []
+    for m in medicines:
+        d = dict(m)
+        d['expiry'] = format_expiry(d.get('expiry'))
+        result.append(d)
+    return jsonify(result)
 
 @app.route('/')
 def home():
@@ -107,7 +126,7 @@ def invoice():
             "hsn": hsns[i] if i < len(hsns) else "",
             "pack": packs[i] if i < len(packs) else "",
             "batch": batches[i],
-            "expiry": expiry[i] if i < len(expiry) else "",
+            "expiry": format_expiry(expiry[i]) if i < len(expiry) else "",
             "mrp": round(mrp, 2),
             "qty": qty,
             "free": free,
