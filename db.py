@@ -47,7 +47,6 @@ def init_db():
     )
     """)
 
-    # Saved retail shop / party master data
     cur.execute("""
     CREATE TABLE IF NOT EXISTS parties(
         id SERIAL PRIMARY KEY,
@@ -115,9 +114,13 @@ def get_alerts():
     cur.execute("SELECT * FROM medicines WHERE stock < 5")
     low_stock = cur.fetchall()
 
+    # Only attempt the date conversion on values that actually look like
+    # a YYYY-MM-DD date. Anything blank or oddly formatted (from earlier
+    # test entries, manual edits, etc.) is safely skipped instead of
+    # crashing the whole query.
     cur.execute("""
         SELECT * FROM medicines
-        WHERE expiry IS NOT NULL AND expiry != ''
+        WHERE expiry ~ '^\\d{4}-\\d{2}-\\d{2}$'
         AND TO_DATE(expiry, 'YYYY-MM-DD') <= CURRENT_DATE + INTERVAL '30 days'
     """)
     expiry_soon = cur.fetchall()
@@ -125,8 +128,6 @@ def get_alerts():
     conn.close()
     return low_stock, expiry_soon
 
-
-# ---------------- PARTIES (retail shops) ----------------
 
 def add_party(name, address, gstin, phone, state, d20b, d21b):
     conn = get_db()
