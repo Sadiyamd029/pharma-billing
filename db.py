@@ -40,11 +40,24 @@ def init_db():
     ]:
         cur.execute(f"ALTER TABLE medicines ADD COLUMN IF NOT EXISTS {col} {coltype}")
 
-    # Bill numbering — every generated invoice gets a permanent, incrementing number
     cur.execute("""
     CREATE TABLE IF NOT EXISTS bills(
         id SERIAL PRIMARY KEY,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # Saved retail shop / party master data
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS parties(
+        id SERIAL PRIMARY KEY,
+        name TEXT,
+        address TEXT,
+        gstin TEXT,
+        phone TEXT,
+        state TEXT,
+        d20b TEXT,
+        d21b TEXT
     )
     """)
 
@@ -53,7 +66,6 @@ def init_db():
 
 
 def create_bill():
-    """Creates a new bill record and returns its number (the SERIAL id)."""
     conn = get_db()
     cur = conn.cursor()
     cur.execute("INSERT INTO bills DEFAULT VALUES RETURNING id")
@@ -66,13 +78,11 @@ def create_bill():
 def add_medicine(name, mfr, hsn, pack, batch, expiry, purchase_price, rate, mrp, gst, stock):
     conn = get_db()
     cur = conn.cursor()
-
     cur.execute("""
         INSERT INTO medicines
         (name, mfr, hsn, pack, batch, expiry, purchase_price, rate, mrp, gst, stock)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     """, (name, mfr, hsn, pack, batch, expiry, purchase_price, rate, mrp, gst, stock))
-
     conn.commit()
     conn.close()
 
@@ -114,3 +124,33 @@ def get_alerts():
 
     conn.close()
     return low_stock, expiry_soon
+
+
+# ---------------- PARTIES (retail shops) ----------------
+
+def add_party(name, address, gstin, phone, state, d20b, d21b):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO parties (name, address, gstin, phone, state, d20b, d21b)
+        VALUES (%s,%s,%s,%s,%s,%s,%s)
+    """, (name, address, gstin, phone, state, d20b, d21b))
+    conn.commit()
+    conn.close()
+
+
+def get_all_parties():
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM parties ORDER BY name")
+    data = cur.fetchall()
+    conn.close()
+    return data
+
+
+def delete_party(party_id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM parties WHERE id = %s", (party_id,))
+    conn.commit()
+    conn.close()

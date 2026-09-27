@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+<h2>Add Retail Shop</h2>
+
+<form method="POST">
+<input name="name" placeholder="Shop Name" required><br><br>
+<input name="address" placeholder="Address"><br><br>
+<input name="gstin" placeholder="GSTIN"><br><br>
+<input name="phone" placeholder="Phone"><br><br>
+<input name="state" placeholder="State"><br><br>
+<input name="d20b" placeholder="D20B License No."><br><br>
+<input name="d21b" placeholder="D21B License No."><br><br>
+
+<button>Save Shop</button>
+</form>
+</div>
+
+<div class="card">
+<h3>Saved Shops</h3>
+
+<table>
+<tr>
+<th>Name</th><th>Address</th><th>GSTIN</th><th>Phone</th><th>State</th><th>D20B</th><th>D21B</th><th>Actions</th>
+</tr>
+
+{% for p in parties %}
+<tr>
+<td>{{ p['name'] }}</td>
+<td>{{ p['address'] or '' }}</td>
+<td>{{ p['gstin'] or '' }}</td>
+<td>{{ p['phone'] or '' }}</td>
+<td>{{ p['state'] or '' }}</td>
+<td>{{ p['d20b'] or '' }}</td>
+<td>{{ p['d21b'] or '' }}</td>
+<td><a href="/delete_party/{{ p['id'] }}"><button style="background:red;">Delete</button></a></td>
+</tr>
+{% endfor %}
+
+</table>
+</div>
+
+{% endblock %}

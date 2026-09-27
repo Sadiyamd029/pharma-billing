@@ -158,12 +158,14 @@
             <div class="shop-name">Aushadhi Enterprises</div>
             D.NO: 6D-10-15, Kathepu Veedhi Road, Eluru<br>
             PAN: ABIFA1323R &nbsp; Tel: 9701616165<br>
+            D20B: {{ seller_d20b }} &nbsp; D21B: {{ seller_d21b }}<br>
             GSTIN: 37ABIFA1323R1Z6
         </div>
         <div class="col col2">
             <div class="to-label">TO :</div>
             {% if party %}{{ party }}{% endif %}
             {% if party_address %}<br>{{ party_address }}{% endif %}
+            {% if party_d20b or party_d21b %}<br>D20B: {{ party_d20b }} &nbsp; D21B: {{ party_d21b }}{% endif %}
             {% if party_gstin %}<br>GSTIN: {{ party_gstin }}{% endif %}
             {% if party_phone %}<br>Ph: {{ party_phone }}{% endif %}
         </div>
@@ -310,8 +312,6 @@ function numberToWords(num) {
     return num === 0 ? 'Zero' : inWords(Math.round(num));
 }
 
-// Total comes straight from the template, not scraped from the page —
-// avoids breaking if the layout around it ever changes again.
 const netVal = {{ total }};
 document.getElementById('amountInWords').textContent = 'Rupees ' + numberToWords(netVal) + ' Only';
 </script>

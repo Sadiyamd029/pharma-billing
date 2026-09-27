@@ -1,8 +1,22 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-from db import get_all_medicines, get_alerts, init_db, get_db, add_medicine, reduce_stock, create_bill
-from datetime import datetime
-import os
+from db import (
+    get_all_medicines, get_alerts, init_db, get_db, add_medicine, reduce_stock, create_bill,
+    add_party, get_all_parties, delete_party
+)
 from datetime import date, datetime
+import os
+
+app = Flask(__name__)
+app.secret_key = "sa0206"
+
+init_db()
+
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "1234")
+
+# Seller's own fixed license numbers — fill in your real ones here
+SELLER_D20B = "WLF20B2025AP001258"
+SELLER_D21B = "WLF21B2025AP001249"
 
 def format_expiry(value):
     """Always returns MM/YY regardless of whether the DB gives us a
@@ -17,14 +31,6 @@ def format_expiry(value):
         return parsed.strftime('%m/%y')
     except ValueError:
         return s
-
-app = Flask(__name__)
-app.secret_key = "sa0206"
-
-init_db()
-
-ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "1234")
 
 
 @app.route("/chart_data")
@@ -46,6 +52,15 @@ def api_medicines():
         d['expiry'] = format_expiry(d.get('expiry'))
         result.append(d)
     return jsonify(result)
+
+
+@app.route("/api/parties")
+def api_parties():
+    if 'user' not in session:
+        return jsonify([])
+    parties = get_all_parties()
+    return jsonify([dict(p) for p in parties])
+
 
 @app.route('/')
 def home():
@@ -79,6 +94,8 @@ def invoice():
     party_gstin   = request.form.get('party_gstin', '')
     party_phone   = request.form.get('party_phone', '')
     party_state   = request.form.get('party_state', '')
+    party_d20b    = request.form.get('party_d20b', '')
+    party_d21b    = request.form.get('party_d21b', '')
     mode          = request.form.get('mode', 'Cash')
 
     items = []
@@ -168,6 +185,10 @@ def invoice():
         party_gstin=party_gstin,
         party_phone=party_phone,
         party_state=party_state,
+        party_d20b=party_d20b,
+        party_d21b=party_d21b,
+        seller_d20b=SELLER_D20B,
+        seller_d21b=SELLER_D21B,
         mode=mode,
         bill_no=bill_no,
         bill_date=bill_date,
@@ -293,6 +314,35 @@ def alerts():
 
     low_stock, expiry_soon = get_alerts()
     return render_template('alerts.html', low_stock=low_stock, expiry_soon=expiry_soon)
+
+
+# ---------------- PARTIES (retail shops) PAGE ----------------
+@app.route('/parties', methods=["GET", "POST"])
+def parties():
+    if 'user' not in session:
+        return redirect('/login')
+
+    if request.method == "POST":
+        add_party(
+            request.form.get("name"),
+            request.form.get("address"),
+            request.form.get("gstin"),
+            request.form.get("phone"),
+            request.form.get("state"),
+            request.form.get("d20b"),
+            request.form.get("d21b"),
+        )
+
+    all_parties = get_all_parties()
+    return render_template('parties.html', parties=all_parties)
+
+
+@app.route("/delete_party/<int:party_id>")
+def delete_party_route(party_id):
+    if 'user' not in session:
+        return redirect('/login')
+    delete_party(party_id)
+    return redirect("/parties")
 
 
 if __name__ == "__main__":

@@ -33,20 +33,25 @@ td input {
 <h2>Billing</h2>
 
 <datalist id="medList"></datalist>
+<datalist id="partyList"></datalist>
 
 <form action="/invoice" method="POST">
-<input name="party" placeholder="Party Name"><br><br>
-<input name="party" placeholder="Party Name"><br><br>
-<input name="party_address" placeholder="Party Address"><br><br>
+<input name="party" list="partyList" placeholder="Party Name" id="partyNameInput"><br><br>
+<input name="party_address" id="partyAddress" placeholder="Party Address"><br><br>
 <div style="display:flex; gap:10px;">
-    <input name="party_gstin" placeholder="Party GSTIN">
-    <input name="party_phone" placeholder="Party Phone">
-    <input name="party_state" placeholder="State">
+    <input name="party_gstin" id="partyGstin" placeholder="Party GSTIN">
+    <input name="party_phone" id="partyPhone" placeholder="Party Phone">
+    <input name="party_state" id="partyState" placeholder="State">
+</div><br>
+<div style="display:flex; gap:10px;">
+    <input name="party_d20b" id="partyD20b" placeholder="Party D20B License">
+    <input name="party_d21b" id="partyD21b" placeholder="Party D21B License">
 </div><br>
 <select name="mode" style="width:150px; margin-bottom:15px;">
     <option value="Cash">Cash</option>
     <option value="Credit">Credit</option>
 </select><br><br>
+
 <table id="billTable">
 <tr>
 <th>Medicine</th>
@@ -117,8 +122,9 @@ td input {
 
 <script>
 let medicineData = [];
+let partyData = [];
 
-function labelFor(m){
+function medLabel(m){
     return `${m.name} — ${m.batch} — Exp ${m.expiry || 'NA'} — Stock ${m.stock}`;
 }
 
@@ -130,14 +136,28 @@ async function loadMedicines(){
         dl.innerHTML = '';
         medicineData.forEach(m => {
             let opt = document.createElement('option');
-            opt.value = labelFor(m);
+            opt.value = medLabel(m);
             dl.appendChild(opt);
         });
     }catch(e){ console.log('medicine list error', e); }
 }
 
+async function loadParties(){
+    try{
+        let res = await fetch('/api/parties');
+        partyData = await res.json();
+        let dl = document.getElementById('partyList');
+        dl.innerHTML = '';
+        partyData.forEach(p => {
+            let opt = document.createElement('option');
+            opt.value = p.name;
+            dl.appendChild(opt);
+        });
+    }catch(e){ console.log('party list error', e); }
+}
+
 function autofillRow(row, typedValue){
-    let match = medicineData.find(m => labelFor(m) === typedValue);
+    let match = medicineData.find(m => medLabel(m) === typedValue);
     if(!match) return;
 
     row.querySelector('[name="name"]').value = match.name;
@@ -149,13 +169,28 @@ function autofillRow(row, typedValue){
     row.querySelector('[name="mrp"]').value = match.mrp || '';
     row.querySelector('[name="rate"]').value = match.rate || '';
     row.querySelector('[name="gst"]').value = match.gst || '';
-    // qty, free, disc are left as-is for manual entry
+}
+
+function autofillParty(typedValue){
+    let match = partyData.find(p => p.name === typedValue);
+    if(!match) return;
+
+    document.getElementById('partyAddress').value = match.address || '';
+    document.getElementById('partyGstin').value = match.gstin || '';
+    document.getElementById('partyPhone').value = match.phone || '';
+    document.getElementById('partyState').value = match.state || '';
+    document.getElementById('partyD20b').value = match.d20b || '';
+    document.getElementById('partyD21b').value = match.d21b || '';
 }
 
 document.getElementById('billTable').addEventListener('input', function(e){
     if(e.target.name === 'name'){
         autofillRow(e.target.closest('tr'), e.target.value);
     }
+});
+
+document.getElementById('partyNameInput').addEventListener('input', function(e){
+    autofillParty(e.target.value);
 });
 
 function addRow(){
@@ -176,6 +211,7 @@ function addRow(){
 }
 
 loadMedicines();
+loadParties();
 </script>
 
 {% endblock %}
