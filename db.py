@@ -1,7 +1,7 @@
 import os
 import psycopg2
 import psycopg2.extras
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -115,11 +115,13 @@ def get_alerts():
     cur.execute("SELECT * FROM medicines WHERE stock < 5")
     low_stock = cur.fetchall()
 
-    # Pull every medicine that has *something* in expiry, then parse
-    # dates in Python instead of in SQL. This avoids Postgres crashing
-    # on blank/bad-format dates, since a bad row just gets skipped here
-    # instead of breaking the whole query.
-    cur.execute("SELECT * FROM medicines WHERE expiry IS NOT NULL AND expiry != ''")
+    # Your expiry column turned out to be a real DATE type already (not
+    # TEXT like our CREATE TABLE assumes — that only applies to brand new
+    # tables, it can't change a column that already exists). Comparing a
+    # DATE column to an empty string '' is what was crashing every time.
+    # Fix: just pull every non-null expiry as-is and compare in Python,
+    # handling both a real date object and a plain string safely.
+    cur.execute("SELECT * FROM medicines WHERE expiry IS NOT NULL")
     all_with_expiry = cur.fetchall()
 
     conn.close()
@@ -128,11 +130,20 @@ def get_alerts():
     cutoff = datetime.now().date() + timedelta(days=30)
 
     for m in all_with_expiry:
-        raw = str(m['expiry'])[:10]
-        try:
-            exp_date = datetime.strptime(raw, '%Y-%m-%d').date()
-        except ValueError:
-            continue  # not a recognizable date — skip instead of crashing
+        raw = m['expiry']
+
+        if isinstance(raw, datetime):
+            exp_date = raw.date()
+        elif isinstance(raw, date):
+            exp_date = raw
+        else:
+            s = str(raw).strip()[:10]
+            if not s:
+                continue
+            try:
+                exp_date = datetime.strptime(s, '%Y-%m-%d').date()
+            except ValueError:
+                continue
 
         if exp_date <= cutoff:
             expiry_soon.append(m)
