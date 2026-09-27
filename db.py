@@ -1,6 +1,7 @@
 import os
 import psycopg2
 import psycopg2.extras
+from datetime import datetime, timedelta
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -114,18 +115,28 @@ def get_alerts():
     cur.execute("SELECT * FROM medicines WHERE stock < 5")
     low_stock = cur.fetchall()
 
-    # Only attempt the date conversion on values that actually look like
-    # a YYYY-MM-DD date. Anything blank or oddly formatted (from earlier
-    # test entries, manual edits, etc.) is safely skipped instead of
-    # crashing the whole query.
-    cur.execute("""
-        SELECT * FROM medicines
-        WHERE expiry ~ '^\\d{4}-\\d{2}-\\d{2}$'
-        AND TO_DATE(expiry, 'YYYY-MM-DD') <= CURRENT_DATE + INTERVAL '30 days'
-    """)
-    expiry_soon = cur.fetchall()
+    # Pull every medicine that has *something* in expiry, then parse
+    # dates in Python instead of in SQL. This avoids Postgres crashing
+    # on blank/bad-format dates, since a bad row just gets skipped here
+    # instead of breaking the whole query.
+    cur.execute("SELECT * FROM medicines WHERE expiry IS NOT NULL AND expiry != ''")
+    all_with_expiry = cur.fetchall()
 
     conn.close()
+
+    expiry_soon = []
+    cutoff = datetime.now().date() + timedelta(days=30)
+
+    for m in all_with_expiry:
+        raw = str(m['expiry'])[:10]
+        try:
+            exp_date = datetime.strptime(raw, '%Y-%m-%d').date()
+        except ValueError:
+            continue  # not a recognizable date — skip instead of crashing
+
+        if exp_date <= cutoff:
+            expiry_soon.append(m)
+
     return low_stock, expiry_soon
 
 
