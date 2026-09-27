@@ -20,13 +20,6 @@ th {
 td input {
     min-width: 60px;
 }
-
-@media print {
-    body { background: white !important; color: black !important; }
-    .navbar, button, a { display: none !important; }
-    #invoice { display: block; width: 100%; margin: 0; padding: 0; }
-    .card { box-shadow: none; background: white; }
-}
 </style>
 
 <div class="card">
@@ -90,34 +83,6 @@ td input {
 <button type="submit">Generate Bill</button>
 
 </form>
-</div>
-
-<!-- ✅ INVOICE SECTION -->
-<div class="card" id="invoice">
-<h3 style="text-align:center;">Invoice</h3>
-
-<table border="1">
-<tr>
-<th>Name</th>
-<th>Batch</th>
-<th>Qty</th>
-<th>Total</th>
-</tr>
-
-{% for i in items %}
-<tr>
-<td>{{ i.name }}</td>
-<td>{{ i.batch }}</td>
-<td>{{ i.qty }}</td>
-<td>{{ i.amount }}</td>
-</tr>
-{% endfor %}
-
-</table>
-
-<h3 style="text-align:right;">Total: ₹{{ total }}</h3>
-
-<button onclick="window.print()">🖨 Print</button>
 </div>
 
 <script>
