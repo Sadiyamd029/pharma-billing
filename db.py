@@ -11,6 +11,10 @@ if not DATABASE_URL:
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
+# FIX: expiry is read as text so a bad date (year 72027) cannot crash Python
+MED_COLS = """id, name, mfr, hsn, pack, batch, purchase_price,
+              rate, mrp, gst, stock, expiry::text AS expiry"""
+
 
 def get_db():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
@@ -62,6 +66,18 @@ def init_db():
     """)
 
     conn.commit()
+
+    # FIX: clear any broken expiry year (more than 4 digits, e.g. 72027)
+    try:
+        cur.execute("""
+            UPDATE medicines SET expiry = NULL
+            WHERE expiry IS NOT NULL
+              AND LENGTH(SPLIT_PART(expiry::text, '-', 1)) > 4
+        """)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
     conn.close()
 
 
@@ -90,7 +106,7 @@ def add_medicine(name, mfr, hsn, pack, batch, expiry, purchase_price, rate, mrp,
 def get_all_medicines():
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT * FROM medicines ORDER BY name")
+    cur.execute(f"SELECT {MED_COLS} FROM medicines ORDER BY name")
     data = cur.fetchall()
     conn.close()
     return data
@@ -112,16 +128,10 @@ def get_alerts():
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    cur.execute("SELECT * FROM medicines WHERE stock < 5")
+    cur.execute(f"SELECT {MED_COLS} FROM medicines WHERE stock < 5")
     low_stock = cur.fetchall()
 
-    # Your expiry column turned out to be a real DATE type already (not
-    # TEXT like our CREATE TABLE assumes — that only applies to brand new
-    # tables, it can't change a column that already exists). Comparing a
-    # DATE column to an empty string '' is what was crashing every time.
-    # Fix: just pull every non-null expiry as-is and compare in Python,
-    # handling both a real date object and a plain string safely.
-    cur.execute("SELECT * FROM medicines WHERE expiry IS NOT NULL")
+    cur.execute(f"SELECT {MED_COLS} FROM medicines WHERE expiry IS NOT NULL")
     all_with_expiry = cur.fetchall()
 
     conn.close()
@@ -130,20 +140,11 @@ def get_alerts():
     cutoff = datetime.now().date() + timedelta(days=30)
 
     for m in all_with_expiry:
-        raw = m['expiry']
-
-        if isinstance(raw, datetime):
-            exp_date = raw.date()
-        elif isinstance(raw, date):
-            exp_date = raw
-        else:
-            s = str(raw).strip()[:10]
-            if not s:
-                continue
-            try:
-                exp_date = datetime.strptime(s, '%Y-%m-%d').date()
-            except ValueError:
-                continue
+        s = (m['expiry'] or '').strip()[:10]
+        try:
+            exp_date = datetime.strptime(s, '%Y-%m-%d').date()
+        except ValueError:
+            continue  # skip garbage dates instead of crashing
 
         if exp_date <= cutoff:
             expiry_soon.append(m)
