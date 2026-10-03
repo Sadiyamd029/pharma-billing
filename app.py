@@ -14,23 +14,28 @@ init_db()
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "1234")
 
-# Seller's own fixed license numbers — fill in your real ones here
 SELLER_D20B = "WLF20B2025AP001258"
 SELLER_D21B = "WLF21B2025AP001249"
 
+
 def format_expiry(value):
-    """Always returns MM/YY regardless of whether the DB gives us a
-    date object, a full ISO string, or something already short."""
+    """Always returns MM/YYYY. Understands a full date (YYYY-MM-DD,
+    from old entries or a date object) and a month-only value
+    (YYYY-MM, from the <input type="month"> fields)."""
     if not value:
         return ""
     if isinstance(value, (date, datetime)):
-        return value.strftime('%m/%y')
-    s = str(value)
+        return value.strftime('%m/%Y')
+    s = str(value).strip()
     try:
-        parsed = datetime.strptime(s[:10], '%Y-%m-%d')
-        return parsed.strftime('%m/%y')
+        return datetime.strptime(s[:10], '%Y-%m-%d').strftime('%m/%Y')
     except ValueError:
-        return s
+        pass
+    try:
+        return datetime.strptime(s[:7], '%Y-%m').strftime('%m/%Y')
+    except ValueError:
+        pass
+    return s
 
 
 @app.route("/chart_data")
@@ -326,7 +331,6 @@ def alerts():
     return render_template('alerts.html', low_stock=low_stock, expiry_soon=expiry_soon)
 
 
-# ---------------- PARTIES (retail shops) PAGE ----------------
 @app.route('/parties', methods=["GET", "POST"])
 def parties():
     if 'user' not in session:
