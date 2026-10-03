@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from db import (
     get_all_medicines, get_alerts, init_db, get_db, add_medicine, reduce_stock, create_bill,
-    add_party, get_all_parties, delete_party
+    add_party, get_all_parties, delete_party, get_medicine, update_medicine
 )
 from datetime import date, datetime
 import os
@@ -275,22 +275,32 @@ def add_stock():
 
 @app.route("/edit/<name>/<batch>", methods=["GET", "POST"])
 def edit(name, batch):
+    if 'user' not in session:
+        return redirect('/login')
+
     if request.method == "POST":
-        new_stock = request.form.get("stock")
+        def f(key):
+            v = request.form.get(key)
+            return float(v) if v else 0
 
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("""
-            UPDATE medicines
-            SET stock = %s
-            WHERE name = %s AND batch = %s
-        """, (new_stock, name, batch))
-        conn.commit()
-        conn.close()
-
+        update_medicine(
+            name, batch,
+            request.form.get("name"),
+            request.form.get("mfr"),
+            request.form.get("hsn"),
+            request.form.get("pack"),
+            request.form.get("batch"),
+            request.form.get("expiry"),
+            f("purchase_price"),
+            f("rate"),
+            f("mrp"),
+            f("gst"),
+            int(f("stock")),
+        )
         return redirect("/add_stock")
 
-    return render_template("edit.html", name=name, batch=batch)
+    medicine = get_medicine(name, batch)
+    return render_template("edit.html", medicine=medicine)
 
 
 @app.route("/delete/<name>/<batch>")
