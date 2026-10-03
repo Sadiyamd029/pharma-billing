@@ -10,7 +10,23 @@
 <input name="hsn" placeholder="HSN Code"><br><br>
 <input name="pack" placeholder="Pack / Size (e.g. 10x10, 100ml)"><br><br>
 <input name="batch" placeholder="Batch No" required><br><br>
-<input type="month" name="expiry" placeholder="MM/YYYY"><br><br>
+
+<label style="font-size:13px; color:#ccc;">Expiry</label>
+<div style="display:flex; gap:10px; margin:6px 0 16px;">
+    <select name="expiry_month" required>
+        <option value="">Month</option>
+        {% for m in range(1,13) %}
+        <option value="{{ '%02d'|format(m) }}">{{ '%02d'|format(m) }}</option>
+        {% endfor %}
+    </select>
+    <select name="expiry_year" required>
+        <option value="">Year</option>
+        {% for y in range(current_year, current_year + 11) %}
+        <option value="{{ y }}">{{ y }}</option>
+        {% endfor %}
+    </select>
+</div>
+
 <input name="purchase_price" type="number" step="any" placeholder="Purchase Price"><br><br>
 <input name="rate" type="number" step="any" placeholder="Selling Price (Rate)"><br><br>
 <input name="mrp" type="number" step="any" placeholder="MRP"><br><br>

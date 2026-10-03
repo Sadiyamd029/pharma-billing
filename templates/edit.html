@@ -10,7 +10,23 @@
 <input name="hsn" placeholder="HSN Code" value="{{ medicine['hsn'] or '' }}"><br><br>
 <input name="pack" placeholder="Pack / Size" value="{{ medicine['pack'] or '' }}"><br><br>
 <input name="batch" placeholder="Batch No" value="{{ medicine['batch'] }}" required><br><br>
-<input type="date" name="expiry" value="{{ medicine['expiry'] }}"><br><br>
+
+<label style="font-size:13px; color:#ccc;">Expiry</label>
+<div style="display:flex; gap:10px; margin:6px 0 16px;">
+    <select name="expiry_month" required>
+        <option value="">Month</option>
+        {% for m in range(1,13) %}
+        <option value="{{ '%02d'|format(m) }}" {% if med_month == m %}selected{% endif %}>{{ '%02d'|format(m) }}</option>
+        {% endfor %}
+    </select>
+    <select name="expiry_year" required>
+        <option value="">Year</option>
+        {% for y in range(current_year - 2, current_year + 11) %}
+        <option value="{{ y }}" {% if med_year == y %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+    </select>
+</div>
+
 <input name="purchase_price" type="number" step="any" placeholder="Purchase Price" value="{{ medicine['purchase_price'] or '' }}"><br><br>
 <input name="rate" type="number" step="any" placeholder="Selling Price (Rate)" value="{{ medicine['rate'] or '' }}"><br><br>
 <input name="mrp" type="number" step="any" placeholder="MRP" value="{{ medicine['mrp'] or '' }}"><br><br>

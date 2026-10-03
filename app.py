@@ -19,9 +19,6 @@ SELLER_D21B = "WLF21B2025AP001249"
 
 
 def format_expiry(value):
-    """Always returns MM/YYYY. Understands a full date (YYYY-MM-DD,
-    from old entries or a date object) and a month-only value
-    (YYYY-MM, from the <input type="month"> fields)."""
     if not value:
         return ""
     if isinstance(value, (date, datetime)):
@@ -36,6 +33,22 @@ def format_expiry(value):
     except ValueError:
         pass
     return s
+
+
+def parse_month_year(value):
+    """Returns (month_int, year_int) from a stored expiry value, or
+    (None, None) if it can't be parsed — used to pre-select the
+    dropdowns on the Edit page."""
+    if not value:
+        return None, None
+    s = str(value).strip()
+    for fmt, length in [('%Y-%m-%d', 10), ('%Y-%m', 7)]:
+        try:
+            d = datetime.strptime(s[:length], fmt)
+            return d.month, d.year
+        except ValueError:
+            continue
+    return None, None
 
 
 @app.route("/chart_data")
@@ -260,13 +273,17 @@ def add_stock():
             v = request.form.get(key)
             return float(v) if v else 0
 
+        month = request.form.get("expiry_month", "")
+        year = request.form.get("expiry_year", "")
+        expiry = f"{year}-{month}" if month and year else ""
+
         add_medicine(
             request.form.get("name"),
             request.form.get("mfr"),
             request.form.get("hsn"),
             request.form.get("pack"),
             request.form.get("batch"),
-            request.form.get("expiry"),
+            expiry,
             f("purchase_price"),
             f("rate"),
             f("mrp"),
@@ -275,7 +292,8 @@ def add_stock():
         )
 
     medicines = get_all_medicines()
-    return render_template('add_stock.html', medicines=medicines)
+    current_year = datetime.now().year
+    return render_template('add_stock.html', medicines=medicines, current_year=current_year)
 
 
 @app.route("/edit/<name>/<batch>", methods=["GET", "POST"])
@@ -288,6 +306,10 @@ def edit(name, batch):
             v = request.form.get(key)
             return float(v) if v else 0
 
+        month = request.form.get("expiry_month", "")
+        year = request.form.get("expiry_year", "")
+        expiry = f"{year}-{month}" if month and year else ""
+
         update_medicine(
             name, batch,
             request.form.get("name"),
@@ -295,7 +317,7 @@ def edit(name, batch):
             request.form.get("hsn"),
             request.form.get("pack"),
             request.form.get("batch"),
-            request.form.get("expiry"),
+            expiry,
             f("purchase_price"),
             f("rate"),
             f("mrp"),
@@ -305,7 +327,15 @@ def edit(name, batch):
         return redirect("/add_stock")
 
     medicine = get_medicine(name, batch)
-    return render_template("edit.html", medicine=medicine)
+    med_month, med_year = parse_month_year(medicine['expiry']) if medicine else (None, None)
+    current_year = datetime.now().year
+    return render_template(
+        "edit.html",
+        medicine=medicine,
+        med_month=med_month,
+        med_year=med_year,
+        current_year=current_year,
+    )
 
 
 @app.route("/delete/<name>/<batch>")
