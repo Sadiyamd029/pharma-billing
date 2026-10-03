@@ -5,14 +5,19 @@
 <h2>Edit Medicine</h2>
 
 <form method="POST">
+<input name="name" placeholder="Medicine Name" value="{{ medicine['name'] }}" required><br><br>
+<input name="mfr" placeholder="MFR Code" value="{{ medicine['mfr'] or '' }}"><br><br>
+<input name="hsn" placeholder="HSN Code" value="{{ medicine['hsn'] or '' }}"><br><br>
+<input name="pack" placeholder="Pack / Size" value="{{ medicine['pack'] or '' }}"><br><br>
+<input name="batch" placeholder="Batch No" value="{{ medicine['batch'] }}" required><br><br>
+<input type="date" name="expiry" value="{{ medicine['expiry'] }}"><br><br>
+<input name="purchase_price" type="number" step="any" placeholder="Purchase Price" value="{{ medicine['purchase_price'] or '' }}"><br><br>
+<input name="rate" type="number" step="any" placeholder="Selling Price (Rate)" value="{{ medicine['rate'] or '' }}"><br><br>
+<input name="mrp" type="number" step="any" placeholder="MRP" value="{{ medicine['mrp'] or '' }}"><br><br>
+<input name="gst" type="number" step="any" placeholder="GST %" value="{{ medicine['gst'] or '' }}"><br><br>
+<input name="stock" type="number" placeholder="Stock Qty" value="{{ medicine['stock'] }}" required><br><br>
 
-    <p><strong>Name:</strong> {{ name }}</p>
-    <p><strong>Batch:</strong> {{ batch }}</p>
-
-    <input name="stock" placeholder="New Stock" required><br><br>
-
-    <button type="submit">Update</button>
-
+<button>Update</button>
 </form>
 </div>
 

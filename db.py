@@ -1,7 +1,7 @@
 import os
 import psycopg2
 import psycopg2.extras
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -11,7 +11,8 @@ if not DATABASE_URL:
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# FIX: expiry is read as text so a bad date (year 72027) cannot crash Python
+# expiry is always read back as text, so a bad/corrupted date can never
+# crash Python with a type error — we just get a string to safely parse.
 MED_COLS = """id, name, mfr, hsn, pack, batch, purchase_price,
               rate, mrp, gst, stock, expiry::text AS expiry"""
 
@@ -67,7 +68,8 @@ def init_db():
 
     conn.commit()
 
-    # FIX: clear any broken expiry year (more than 4 digits, e.g. 72027)
+    # Clear any corrupted expiry year (more than 4 digits, e.g. "72027")
+    # left over from earlier test entries, so it can never crash a query.
     try:
         cur.execute("""
             UPDATE medicines SET expiry = NULL
@@ -110,6 +112,30 @@ def get_all_medicines():
     data = cur.fetchall()
     conn.close()
     return data
+
+
+def get_medicine(name, batch):
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute(f"SELECT {MED_COLS} FROM medicines WHERE name = %s AND batch = %s", (name, batch))
+    data = cur.fetchone()
+    conn.close()
+    return data
+
+
+def update_medicine(old_name, old_batch, name, mfr, hsn, pack, batch, expiry,
+                     purchase_price, rate, mrp, gst, stock):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE medicines
+        SET name=%s, mfr=%s, hsn=%s, pack=%s, batch=%s, expiry=%s,
+            purchase_price=%s, rate=%s, mrp=%s, gst=%s, stock=%s
+        WHERE name=%s AND batch=%s
+    """, (name, mfr, hsn, pack, batch, expiry, purchase_price, rate, mrp, gst, stock,
+          old_name, old_batch))
+    conn.commit()
+    conn.close()
 
 
 def reduce_stock(name, batch, qty):
